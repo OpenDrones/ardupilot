@@ -861,9 +861,6 @@ void Copter::init_disarm_motors()
     // send disarm command to motors
     motors.armed(false);
 
-    // reset the mission
-    mission.reset();
-
 #if CONFIG_SONAR == ENABLED
     // reset target sonar altitude when disarmed
     target_sonar_alt = 0;
