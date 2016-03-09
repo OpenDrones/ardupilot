@@ -175,6 +175,7 @@ private:
 #if CONFIG_SONAR == ENABLED
     RangeFinder sonar{serial_manager};
     bool sonar_enabled; // enable user switch for sonar
+    bool flag_reset_target_sonar_alt;
 #endif
 
     AP_RPM rpm_sensor;

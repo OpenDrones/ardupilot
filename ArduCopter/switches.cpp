@@ -362,6 +362,12 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 #if CONFIG_SONAR == ENABLED
             if (ch_flag == AUX_SWITCH_HIGH) {
                 sonar_enabled = true;
+                if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
+                    flag_reset_target_sonar_alt = true;
+                    target_sonar_alt = constrain_float(sonar_alt, 150, 800);
+                } else {
+                    flag_reset_target_sonar_alt = false;
+                }
             }else{
                 sonar_enabled = false;
             }

@@ -252,6 +252,16 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
     float current_alt = inertial_nav.get_altitude();
     
     float target_sonar_alt_old = target_sonar_alt;
+    // flag to reset target sonar altitude when rangefinder switch on
+    if (!flag_reset_target_sonar_alt) {
+        if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
+            target_sonar_alt = constrain_float(sonar_alt, 100, 800);
+            flag_reset_target_sonar_alt = true;
+        }
+
+        return target_rate;
+    }
+
     // adjust sonar target alt if motors have not hit their limits
     if ((target_rate<0 && !motors.limit.throttle_lower) || (target_rate>0 && !motors.limit.throttle_upper)) {
         target_sonar_alt += target_rate * dt;

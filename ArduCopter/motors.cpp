@@ -864,6 +864,10 @@ void Copter::init_disarm_motors()
     // reset the mission
     mission.reset();
 
+#if CONFIG_SONAR == ENABLED
+    // reset target sonar altitude when disarmed
+    target_sonar_alt = 0;
+#endif
     // suspend logging
     if (!(g.log_bitmask & MASK_LOG_WHEN_DISARMED)) {
         DataFlash.EnableWrites(false);
