@@ -133,6 +133,8 @@ public:
     /// set_wp_origin_and_destination - set origin and destination waypoints using position vectors (distance from home in cm)
     void set_wp_origin_and_destination(const Vector3f& origin, const Vector3f& destination);
 
+    void set_wp_xy_origin_and_destination(const Vector3f& destination);
+
     /// shift_wp_origin_to_current_pos - shifts the origin and destination so the origin starts at the current position
     ///     used to reset the position just before takeoff
     ///     relies on set_wp_destination or set_wp_origin_and_destination having been called first
@@ -156,6 +158,9 @@ public:
 
     /// update_wpnav - run the wp controller - should be called at 100hz or higher
     void update_wpnav();
+
+    // run the waypoint xy controller
+	void update_wpnav_xy();
 
     // check_wp_leash_length - check recalc_wp_leash flag and calls calculate_wp_leash_length() if necessary
     //  should be called after _pos_control.update_xy_controller which may have changed the position controller leash lengths
@@ -216,6 +221,12 @@ public:
 
     /// advance_wp_target_along_track - move target location along track from origin to destination
     void advance_wp_target_along_track(float dt);
+
+    // move target xy location along track from origin to destination
+	void advance_wp_xy_target_along_track(float dt);
+
+    // calculate current target altitude according to current xy position
+    float calc_curr_target_z();
 
     static const struct AP_Param::GroupInfo var_info[];
 

@@ -159,8 +159,15 @@ void Copter::auto_wp_start(const Vector3f& destination)
     auto_mode = Auto_WP;
 
     // initialise wpnav
-    wp_nav.set_wp_destination(destination);
-
+    // don't use range finder in auto flight mode
+	if (g.sonar_alt_wp == 0 || (!sonar_enabled)) {
+        wp_nav.set_wp_destination(destination);
+    }
+	// use range finder in auto flight mode
+    else {
+        wp_nav.set_wp_xy_origin_and_destination(destination);
+    }
+    
     // initialise yaw
     // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
     if (auto_yaw_mode != AUTO_YAW_ROI) {
@@ -172,6 +179,8 @@ void Copter::auto_wp_start(const Vector3f& destination)
 //      called by auto_run at 100hz or more
 void Copter::auto_wp_run()
 {
+    float target_climb_rate = 0;
+
     // if not auto armed or motor interlock not enabled set throttle to zero and exit immediately
     if(!ap.auto_armed || !motors.get_interlock()) {
         // To-Do: reset waypoint origin to current location because copter is probably on the ground so we don't want it lurching left or right on take-off
@@ -199,8 +208,27 @@ void Copter::auto_wp_run()
     }
 
     // run waypoint controller
-    wp_nav.update_wpnav();
+    // don't use range finder in auto flight mode
+    if (g.sonar_alt_wp == 0 || (!sonar_enabled)) {
+        wp_nav.update_wpnav();
+    } 
+	// use range finder in auto flight mode
+	else {
+        wp_nav.update_wpnav_xy();
 
+        // calculate current target sonar altitude according to current xy position
+        target_sonar_alt = wp_nav.calc_curr_target_z();
+
+        // altitude controller according to range finder
+        if (sonar_enabled) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+    
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+    }
+    
     // call z-axis position controller (wpnav should have already updated it's alt target)
     pos_control.update_z_controller();
 

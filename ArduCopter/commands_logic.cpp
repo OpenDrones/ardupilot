@@ -294,7 +294,12 @@ void Copter::do_takeoff(const AP_Mission::Mission_Command& cmd)
 void Copter::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 {
     const Vector3f &curr_pos = inertial_nav.get_position();
-    const Vector3f local_pos = pv_location_to_vector_with_default(cmd.content.location, curr_pos);
+    Vector3f local_pos = pv_location_to_vector_with_default(cmd.content.location, curr_pos);
+
+    if (g.sonar_alt_wp != 0 && sonar_enabled)
+    {
+        local_pos.z = cmd.content.location.alt;
+    }
 
     // this will be used to remember the time in millis after we reach or pass the WP.
     loiter_time = 0;

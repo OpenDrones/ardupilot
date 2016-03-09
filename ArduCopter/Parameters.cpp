@@ -143,6 +143,15 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Increment: 0.01
     // @User: Standard
     GSCALAR(sonar_gain_down,     "RNGFND_GAIN_DOWN",           SONAR_GAIN_DEFAULT),
+
+    // @Param: RNGFND_WAYPOINT
+    // @DisplayName: Rangefinder WP
+    // @Description: Used to judge whether to use rangefinder in waypoint navigation
+    // @Range: 0  1
+    // @Increment: 1
+    // @User: Standard
+    GSCALAR(sonar_alt_wp,     "RNGFND_WP",           0),
+
     // @Param: FS_BATT_ENABLE
     // @DisplayName: Battery Failsafe Enable
     // @Description: Controls whether failsafe will be invoked when battery voltage or current runs low
