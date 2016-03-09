@@ -288,6 +288,9 @@ public:
     /// start_or_resume - if MIS_AUTORESTART=0 this will call resume(), otherwise it will call start()
     void start_or_resume();
 
+    // return restart or resume flag
+    bool is_restart() { return _restart; }
+
     /// reset - reset mission to the first command
     void reset();
 
