@@ -136,7 +136,8 @@ void Copter::tuning() {
 
     case TUNING_SONAR_GAIN:
         // set sonar gain
-        g.sonar_gain.set(tuning_value);
+        g.sonar_gain_up.set(tuning_value);
+        g.sonar_gain_down.set(tuning_value);
         break;
 
 #if 0

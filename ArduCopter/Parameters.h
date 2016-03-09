@@ -99,7 +99,9 @@ public:
         k_param_acro_trainer,
         k_param_pilot_velocity_z_max,
         k_param_circle_rate,                // deprecated - remove
-        k_param_sonar_gain,
+        // Range finder
+        k_param_sonar_gain_up,
+        k_param_sonar_gain_down,
         k_param_ch8_option,
         k_param_arming_check,
         k_param_sprayer,
@@ -133,10 +135,10 @@ public:
         k_param_cli_enabled,
         k_param_throttle_filt,
         k_param_throttle_behavior,
-        k_param_pilot_takeoff_alt, // 64
+        k_param_pilot_takeoff_alt, // 65
 
-        // 65: AP_Limits Library
-        k_param_limits = 65,            // deprecated - remove
+        // 66: AP_Limits Library
+        k_param_limits = 66,            // deprecated - remove
         k_param_gpslock_limit,          // deprecated - remove
         k_param_geofence_limit,         // deprecated - remove
         k_param_altitude_limit,         // deprecated - remove
@@ -366,7 +368,8 @@ public:
     AP_Float        pilot_takeoff_alt;
 
     AP_Int16        rtl_altitude;
-    AP_Float        sonar_gain;
+    AP_Float        sonar_gain_up;
+    AP_Float        sonar_gain_down;
 
     AP_Int8         failsafe_battery_enabled;   // battery failsafe enabled
     AP_Float        fs_batt_voltage;            // battery voltage below which failsafe will be triggered

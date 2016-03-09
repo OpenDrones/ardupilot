@@ -128,14 +128,21 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(rtl_altitude,   "RTL_ALT",     RTL_ALT),
 
-    // @Param: RNGFND_GAIN
-    // @DisplayName: Rangefinder gain
+    // @Param: RNGFND_GAIN_UP
+    // @DisplayName: Rangefinder gain up
     // @Description: Used to adjust the speed with which the target altitude is changed when objects are sensed below the copter
     // @Range: 0.01 2.0
     // @Increment: 0.01
     // @User: Standard
-    GSCALAR(sonar_gain,     "RNGFND_GAIN",           SONAR_GAIN_DEFAULT),
+    GSCALAR(sonar_gain_up,     "RNGFND_GAIN_UP",           SONAR_GAIN_DEFAULT),
 
+    // @Param: RNGFND_GAIN_DOWN
+    // @DisplayName: Rangefinder gain down
+    // @Description: Used to adjust the speed with which the target altitude is changed when objects are sensed above the copter
+    // @Range: 0.01 2.0
+    // @Increment: 0.01
+    // @User: Standard
+    GSCALAR(sonar_gain_down,     "RNGFND_GAIN_DOWN",           SONAR_GAIN_DEFAULT),
     // @Param: FS_BATT_ENABLE
     // @DisplayName: Battery Failsafe Enable
     // @Description: Controls whether failsafe will be invoked when battery voltage or current runs low
