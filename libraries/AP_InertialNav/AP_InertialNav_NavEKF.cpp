@@ -11,11 +11,58 @@
   when EKF is not available
  */
 
+// table of user settable parameters
+const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = { 
+    // @Param: ALT_CORR_FAC0
+    // @DisplayName: 
+    // @Description: altitude correction factor a
+    // @Units:
+    // @Range:
+    // @Increment: 1
+    AP_GROUPINFO("ALT_C0", 0, AP_InertialNav_NavEKF, _alt_corr_fac_a, 5),
+
+    // @Param: ALT_CORR_FAC1
+    // @DisplayName: 
+    // @Description: altitude correction factor b
+    // @Units: 
+    // @Range:
+    // @Increment: 1
+    AP_GROUPINFO("ALT_C1", 1, AP_InertialNav_NavEKF, _alt_corr_fac_b, 15),
+
+    // @Param: ALT_CORR_MAX
+    // @DisplayName: 
+    // @Description: maxinmun altitude correction
+    // @Units: cm
+    // @Range: 
+    // @Increment: 1
+    AP_GROUPINFO("ALT_CMAX", 2, AP_InertialNav_NavEKF, _alt_corr_max, 0),
+
+    // @Param: ALT_C_FF
+    // @DisplayName: 
+    // @Description: altitude correction filter frequency
+    // @Units: hz
+    // @Range: 
+    // @Increment: 1
+    AP_GROUPINFO("ALT_C_FF", 3, AP_InertialNav_NavEKF, _alt_corr_ffreq, 10),
+
+    // @Param: ALT_C_VFF
+    // @DisplayName: 
+    // @Description: filter frequency of velocity to calculate altitude correction
+    // @Units: hz
+    // @Range: 
+    // @Increment: 
+    AP_GROUPINFO("ALT_C_VFF", 4, AP_InertialNav_NavEKF, _alt_c_vel_ffreq, 20),
+    
+    AP_GROUPEND
+};
+
 /**
    update internal state
 */
 void AP_InertialNav_NavEKF::update(float dt)
 {
+    float alt_corr;
+
     _ahrs_ekf.get_NavEKF().getPosNED(_relpos_cm);
     _relpos_cm *= 100; // convert to cm
 
@@ -24,8 +71,12 @@ void AP_InertialNav_NavEKF::update(float dt)
     _ahrs_ekf.get_NavEKF().getVelNED(_velocity_cm);
     _velocity_cm *= 100; // convert to cm/s
 
+    // calc altitude corretion
+    alt_corr = calc_alt_corretion(dt);
+
     // InertialNav is NEU
     _relpos_cm.z = - _relpos_cm.z;
+    _relpos_cm.z -= alt_corr;
     _velocity_cm.z = -_velocity_cm.z;
 }
 
@@ -162,5 +213,29 @@ float AP_InertialNav_NavEKF::get_velocity_z() const
 {
     return _velocity_cm.z;
 }
+
+// altitude correction calculation according to current velocity
+float AP_InertialNav_NavEKF::calc_alt_corretion(float dt)
+{
+    float alt_corretion;
+    float velocity;
+    // calculate velocity in m/s
+    velocity = pythagorous2(_velocity_cm.x,_velocity_cm.y);
+    velocity /= 100;
+    // lowpassfilter of current speed
+    _alt_c_vel_filter.set_cutoff_frequency(_alt_c_vel_ffreq/100.0);
+    velocity = _alt_c_vel_filter.apply(velocity,dt);
+
+    // calculate alt correction according to velocity
+    alt_corretion = _alt_corr_fac_a*velocity*velocity + _alt_corr_fac_b*velocity;
+
+    // calculate alt correction filter
+    _alt_corr_filter.set_cutoff_frequency(_alt_corr_ffreq/100.0);
+    alt_corretion = _alt_corr_filter.apply(alt_corretion,dt);
+    alt_corretion = constrain_float(alt_corretion,0,_alt_corr_max);
+
+    return alt_corretion;
+}
+
 
 #endif // AP_AHRS_NAVEKF_AVAILABLE
