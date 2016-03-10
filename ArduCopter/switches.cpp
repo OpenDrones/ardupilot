@@ -353,6 +353,70 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 }
             }
             break;
+			
+			case AUXSW_CLEAR_AND_SAVE_WP:
+            // save waypoint when switch is brought high
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                // do not allow saving new waypoints while we're in auto or disarmed
+                if(control_mode == AUTO || !motors.armed()) {
+                    return;
+                }
+                // do not allow saving the first waypoint with zero throttle
+                if((mission.num_commands() == 0) && (channel_throttle->control_in == 0)){
+                    return;
+                }
+
+                // clear mission if exist command
+                if (mission.num_commands() != 0) {
+                    if (!mission.clear()) {
+                        return;
+                    }      
+                }
+
+                // create new mission command
+                AP_Mission::Mission_Command cmd  = {};
+
+                // if the mission is empty save a takeoff command
+                if(mission.num_commands() == 0) {
+                    // set our location ID to 16, MAV_CMD_NAV_WAYPOINT
+                    cmd.id = MAV_CMD_NAV_TAKEOFF;
+                    cmd.content.location.options = 0;
+                    cmd.p1 = 0;
+                    cmd.content.location.lat = 0;
+                    cmd.content.location.lng = 0;
+                    cmd.content.location.alt = max(current_loc.alt,100);
+
+                    // use the current altitude for the target alt for takeoff.
+                    // only altitude will matter to the AP mission script for takeoff.
+                    if(mission.add_cmd(cmd)) {
+                        // log event
+                        Log_Write_Event(DATA_SAVEWP_ADD_WP);
+                    }
+                }
+
+                // set new waypoint to current location
+                cmd.content.location = current_loc;
+
+                // if altitude control with sonar in auto mode, recalculate target altitude
+                if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                    cmd.content.location.alt = target_sonar_alt;
+                }
+
+                // if throttle is above zero, create waypoint command
+                if(channel_throttle->control_in > 0) {
+                    cmd.id = MAV_CMD_NAV_WAYPOINT;
+                }else{
+                    // with zero throttle, create LAND command
+                    cmd.id = MAV_CMD_NAV_LAND;
+                }
+
+                // save command
+                if(mission.add_cmd(cmd)) {
+                    // log event
+                    Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);
+                }
+            }
+            break;
 
 #if CAMERA == ENABLED
         case AUXSW_CAMERA_TRIGGER:

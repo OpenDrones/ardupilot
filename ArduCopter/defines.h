@@ -65,7 +65,8 @@ enum aux_sw_func {
     AUXSW_LOST_COPTER_SOUND =   30, // Play lost copter sound
     AUXSW_MOTOR_ESTOP =         31, // Emergency Stop Switch
     AUXSW_MOTOR_INTERLOCK =     32, // Motor On/Off switch
-    AUXSW_BRAKE =               33  // Brake flight mode
+    AUXSW_BRAKE =               33, // Brake flight mode
+    AUXSW_CLEAR_AND_SAVE_WP =   34  // clear mission first and then save mission waypoint
 };
 
 // Frame types
@@ -328,6 +329,7 @@ enum FlipState {
 #define DATA_ROTOR_RUNUP_COMPLETE           58  // Heli only
 #define DATA_ROTOR_SPEED_BELOW_CRITICAL     59  // Heli only
 #define DATA_EKF_ALT_RESET                  60
+#define DATA_CLEAR_AND_SAVE_WP              61
 
 // Centi-degrees to radians
 #define DEGX100 5729.57795f
