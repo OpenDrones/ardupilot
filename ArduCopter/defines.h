@@ -66,7 +66,8 @@ enum aux_sw_func {
     AUXSW_MOTOR_ESTOP =         31, // Emergency Stop Switch
     AUXSW_MOTOR_INTERLOCK =     32, // Motor On/Off switch
     AUXSW_BRAKE =               33, // Brake flight mode
-    AUXSW_CLEAR_AND_SAVE_WP =   34  // clear mission first and then save mission waypoint
+    AUXSW_CRUISE =              34, // Cruise flight mode
+    AUXSW_CLEAR_AND_SAVE_WP =   35  // clear mission first and then save mission waypoint
 };
 
 // Frame types
@@ -102,7 +103,8 @@ enum autopilot_modes {
     FLIP =         14,  // automatically flip the vehicle on the roll axis
     AUTOTUNE =     15,  // automatically tune the vehicle's roll and pitch gains
     POSHOLD =      16,  // automatic position hold with manual override, with automatic throttle
-    BRAKE =        17   // full-brake using inertial/GPS system, no pilot input
+    BRAKE =        17,  // full-brake using inertial/GPS system, no pilot input
+    CRUISE =       18   // cruise at a fixed speed, and under pilot's control like loiter
 };
 
 // Tuning enumeration

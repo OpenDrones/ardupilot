@@ -206,8 +206,10 @@ public:
         k_param_gcs3,
         k_param_gcs_pid_mask,    // 126
 
-        //
-        // 135 : reserved for Solo until features merged with master
+        // cruise control
+		k_param_cruise_speed = 128,
+        
+		// 135 : reserved for Solo until features merged with master
         //
         k_param_rtl_speed_cms = 135,
         k_param_fs_batt_curr_rtl, // 136
@@ -394,6 +396,8 @@ public:
 
     AP_Int16        poshold_brake_rate;         // PosHold flight mode's rotation rate during braking in deg/sec
     AP_Int16        poshold_brake_angle_max;    // PosHold flight mode's max lean angle during braking in centi-degrees
+    // Cruise flight mode controller
+    AP_Int16        cruise_speed;
     
     // Waypoints
     //

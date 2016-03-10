@@ -719,6 +719,10 @@ private:
     void brake_run();
     bool circle_init(bool ignore_checks);
     void circle_run();
+    bool cruise_init(bool ignore_checks);
+    void cruise_run();
+    void init_cruise_vel(float &cruise_vel_fwd, float &cruise_vel_rgt);
+    void get_pilot_cruise_vel(float &target_vel, float vel, float pilot_in);
     bool drift_init(bool ignore_checks);
     void drift_run();
     int16_t get_throttle_assist(float velz, int16_t pilot_throttle_scaled);
