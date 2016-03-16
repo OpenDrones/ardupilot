@@ -43,6 +43,11 @@
 #define AP_MISSION_FIRST_REAL_COMMAND       1       // command #0 reserved to hold home position
 
 #define AP_MISSION_RESTART_DEFAULT          0       // resume the mission from the last command run by default
+#define AP_MISSION_DISTANCE_DEFAULT         4     // default distance in AB auto-waypoint mode
+#define AP_MISSION_COUNT_DEFAULT            1       // default counter in AB auto-waypoint mode
+
+#define AP_WAYPOINT_CRUISE_A_INDEX          1       // position of point A in memory
+#define AP_WAYPOINT_CRUISE_B_INDEX          2       // position of point B in memory
 
 /// @class    AP_Mission
 /// @brief    Object managing Mission
@@ -294,12 +299,18 @@ public:
     /// reset - reset mission to the first command
     void reset();
 
+    // reset counter
+    void reset_counter() { _count.set_and_save(1); }
+    
     /// clear - clears out mission
     ///     returns true if mission was running so it could not be cleared
     bool clear();
 
     /// truncate - truncate any mission items beyond given index
     void truncate(uint16_t index);
+
+    // _count = _count - 1
+    void truncate_counter_one() { _count.set_and_save(_count - 1); }
 
     /// update - ensures the command queues are loaded with the next command and calls main programs command_init and command_verify functions to progress the mission
     ///     should be called at 10hz or higher
@@ -381,6 +392,12 @@ public:
     // be found.
     uint16_t get_landing_sequence_start();
 
+    // calc destination position used in waypoint cruise mode
+    bool calc_destination_pos(Location &);
+
+    // update destination position
+    void update_wpcruise_target(Location &);
+
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
 
@@ -447,6 +464,8 @@ private:
     // parameters
     AP_Int16                _cmd_total;  // total number of commands in the mission
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
+    AP_Int16                _distance;  // distance in AB auto-waypoint mode
+    AP_Int16                _count;     // count of waypoint in AB auto-waypoint mode
 
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started

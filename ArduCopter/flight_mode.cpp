@@ -98,6 +98,11 @@ bool Copter::set_mode(uint8_t mode)
         case CRUISE:
             success = cruise_init(ignore_checks);
             break;
+
+        case WPCRUISE:
+            success = wpcruise_init();
+            break;
+
         default:
             success = false;
             break;
@@ -213,6 +218,10 @@ void Copter::update_flight_mode()
         case CRUISE:
             cruise_run();
             break;
+
+        case WPCRUISE:
+            wpcruise_run();
+            break;
     }
 }
 
@@ -250,6 +259,32 @@ void Copter::exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED
     }
+
+#if WPCRUISE_ENABLED == ENABLED
+    // save break point when we leave wpcruise mode
+    if (old_control_mode == WPCRUISE)
+    {
+        AP_Mission::Mission_Command cmd = {};
+        cmd.id = MAV_CMD_NAV_WAYPOINT;
+        cmd.content.location = current_loc;
+                
+        // if use range finder in waypoint navigation, recalculate target altitude
+        if (g.sonar_alt_wp != 0 && sonar_enabled) {
+            cmd.content.location.alt = target_sonar_alt;
+        }
+            
+        cmd.p1 = 0;
+
+        mission.truncate_counter_one();
+        // add or replace cmd 
+        if (mission.num_commands() == 3)
+        {
+            mission.add_cmd(cmd);
+        } else {
+            mission.replace_cmd(mission.num_commands(),cmd);
+        }
+    }
+#endif
 
     // smooth throttle transition when switching from manual to automatic flight modes
     if (mode_has_manual_throttle(old_control_mode) && !mode_has_manual_throttle(new_control_mode) && motors.armed() && !ap.land_complete) {
@@ -294,6 +329,7 @@ bool Copter::mode_requires_GPS(uint8_t mode) {
         case POSHOLD:
         case BRAKE:
         case CRUISE:
+        case WPCRUISE:
             return true;
         default:
             return false;
@@ -332,6 +368,7 @@ void Copter::notify_flight_mode(uint8_t mode) {
         case RTL:
         case CIRCLE:
         case LAND:
+        case WPCRUISE:
             // autopilot modes
             AP_Notify::flags.autopilot_mode = true;
             break;
@@ -398,6 +435,9 @@ void Copter::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         break;
     case CRUISE:
         port->print_P(PSTR("CRUISE"));
+        break;
+    case WPCRUISE:
+        port->print_P(PSTR("WPCRUISE"));
         break;
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);

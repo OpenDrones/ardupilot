@@ -300,7 +300,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             if (ch_flag == AUX_SWITCH_HIGH) {
 
                 // do not allow saving new waypoints while we're in auto or disarmed
-                if(control_mode == AUTO || !motors.armed()) {
+                if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed()) {
                     return;
                 }
 
@@ -353,21 +353,23 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 }
             }
             break;
-			
-			case AUXSW_CLEAR_AND_SAVE_WP:
+
+            case AUXSW_CLEAR_AND_SAVE_WP:
             // save waypoint when switch is brought high
             if (ch_flag == AUX_SWITCH_HIGH) {
+
                 // do not allow saving new waypoints while we're in auto or disarmed
-                if(control_mode == AUTO || !motors.armed()) {
+                if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed()) {
                     return;
                 }
+
                 // do not allow saving the first waypoint with zero throttle
                 if((mission.num_commands() == 0) && (channel_throttle->control_in == 0)){
                     return;
                 }
 
-                // clear mission if exist command
-                if (mission.num_commands() != 0) {
+                // clear mission if exist more than 2 commands
+                if (mission.num_commands() > 2) {
                     if (!mission.clear()) {
                         return;
                     }      
@@ -670,6 +672,20 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             }else{
                 // return to flight mode switch's flight mode if we are currently in CRUISE
                 if (control_mode == CRUISE) {
+                    reset_control_switch();
+                }
+            }
+            break;
+#endif
+
+#if WPCRUISE_ENABLED == ENABLED
+        case AUXSW_WPCRUISE:
+            // cruise flight mode
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                   set_mode(WPCRUISE);
+            }else{
+                // return to flight mode switch's flight mode if we are currently in WAYPOINT CRUISE
+                if (control_mode == WPCRUISE) {
                     reset_control_switch();
                 }
             }

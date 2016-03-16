@@ -637,6 +637,12 @@
 #ifndef CRUISE_SPEED_DEFAULT
  # define CRUISE_SPEED_DEFAULT   200    // default CRUISE_SPEED param value.  Max lean angle during braking in centi-degrees
 #endif
+
+// Autocruise flight mode
+#ifndef WPCRUISE_ENABLED
+ # define WPCRUISE_ENABLED           ENABLED // Autocruise flight mode disabled by default
+#endif
+
 // Throttle control gains
 //
 #ifndef THR_MID_DEFAULT
