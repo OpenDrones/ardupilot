@@ -166,6 +166,7 @@ void Copter::auto_wp_start(const Vector3f& destination)
 	// use range finder in auto flight mode
     else {
         wp_nav.set_wp_xy_origin_and_destination(destination);
+        target_sonar_alt = destination.z;
     }
     
     // initialise yaw
@@ -217,7 +218,7 @@ void Copter::auto_wp_run()
         wp_nav.update_wpnav_xy();
 
         // calculate current target sonar altitude according to current xy position
-        target_sonar_alt = wp_nav.calc_curr_target_z();
+        // target_sonar_alt = wp_nav.calc_curr_target_z();
 
         // altitude controller according to range finder
         if (sonar_enabled) {
