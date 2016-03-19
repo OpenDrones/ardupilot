@@ -239,8 +239,6 @@ bool AP_Mission::add_cmd(Mission_Command& cmd)
     bool ret = write_cmd_to_storage(_cmd_total, cmd);
 
     if (ret) {
-        // update command's index
-        cmd.index = _cmd_total;
         // increment total number of commands
         _cmd_total.set_and_save(_cmd_total + 1);
     }
