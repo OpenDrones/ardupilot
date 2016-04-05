@@ -264,24 +264,26 @@ void Copter::exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
     // save break point when we leave wpcruise mode
     if (old_control_mode == WPCRUISE)
     {
-        AP_Mission::Mission_Command cmd = {};
-        cmd.id = MAV_CMD_NAV_WAYPOINT;
-        cmd.content.location = current_loc;
-                
-        // if use range finder in waypoint navigation, recalculate target altitude
-        if (g.sonar_alt_wp != 0 && sonar_enabled) {
-            cmd.content.location.alt = target_sonar_alt;
-        }
-            
-        cmd.p1 = 0;
-
         mission.truncate_counter_one();
-        // add or replace cmd 
-        if (mission.num_commands() == 3)
+        flag_recalc_wp_offset_direction = false;
+        if (control_mode == RTL)
         {
-            mission.add_cmd(cmd);
-        } else {
-            mission.replace_cmd(mission.num_commands(),cmd);
+            AP_Mission::Mission_Command cmd = {};
+            cmd.id = MAV_CMD_NAV_WAYPOINT;
+            cmd.content.location = current_loc;
+                
+            // if use range finder in waypoint navigation, recalculate target altitude
+            if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                cmd.content.location.alt = target_sonar_alt;
+            }            
+            cmd.p1 = 0;
+            // add or replace cmd 
+            if (mission.num_commands() == 3)
+            {
+                mission.add_cmd(cmd);
+            } else {
+                mission.replace_cmd(mission.num_commands(),cmd);
+            }
         }
     }
 #endif

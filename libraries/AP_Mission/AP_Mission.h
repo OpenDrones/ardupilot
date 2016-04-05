@@ -299,8 +299,8 @@ public:
     /// reset - reset mission to the first command
     void reset();
 
-    // reset counter
-    void reset_counter() { _count.set_and_save(1); }
+    // set AB WpCruise offset direction from pilot roll input
+    void set_wp_direction(int8_t roll_direction) { _offset_direction.set_and_save(roll_direction); }
     
     /// clear - clears out mission
     ///     returns true if mission was running so it could not be cleared
@@ -466,6 +466,7 @@ private:
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
     AP_Int16                _distance;  // distance in AB auto-waypoint mode
     AP_Int16                _count;     // count of waypoint in AB auto-waypoint mode
+    AP_Int8                 _offset_direction; // offset direction in AB auto-waypoint mode
 
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started
@@ -485,6 +486,9 @@ private:
 
     // last time that mission changed
     uint32_t _last_change_time_ms;
+
+    // flag to recalc waypoint direction
+    uint8_t _flag_recalc_offset_deirection;
 };
 
 #endif

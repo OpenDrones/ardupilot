@@ -35,6 +35,13 @@ const AP_Param::GroupInfo AP_Mission::var_info[] PROGMEM = {
     // @User: Advanced, not change mannually
     AP_GROUPINFO("COUNT",  3, AP_Mission, _count, AP_MISSION_COUNT_DEFAULT),
 
+    // @Param: OFFSET_DRT
+    // @DisplayName: 
+    // @Description: offset direction in AB auto-waypoint mode
+    // @Values: -1, 1
+    // @User: Advanced, not change mannually
+    AP_GROUPINFO("OFFSET_DRT",  4, AP_Mission, _offset_direction, 1),
+
     AP_GROUPEND
 };
 
@@ -1453,7 +1460,8 @@ bool AP_Mission::calc_destination_pos(Location &loc)
         return false;
     }
 
-    bearing_offset = get_bearing_cd(cmd1.content.location, cmd2.content.location) + 9000;
+    bearing_offset = get_bearing_cd(cmd1.content.location, cmd2.content.location) + _offset_direction * 9000;
+    if (bearing_offset < 0) bearing_offset += 36000;
 
     switch(index_count) {
         // calc destination according to point B from storage

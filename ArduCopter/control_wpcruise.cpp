@@ -4,6 +4,8 @@
 
 #if WPCRUISE_ENABLED == ENABLED
 
+#define ROLLIN_SET_WPCRUISE_DIRECTION_THRESHOLD 0.5f
+
 enum state_wp_cruise {
     RETURN_TO_BREAKPOINT = 0,
     WAYPOINT_NAV
@@ -11,6 +13,7 @@ enum state_wp_cruise {
 static struct {
     // flag to set destination
     uint8_t flag_reach_destination_old;               // old flag of reaching destination
+    uint8_t flag_init_destination;                    // flag to initialize first destination when changing into WPCRUISE
     state_wp_cruise state;
 } wpcruise;
 
@@ -22,6 +25,10 @@ bool Copter::wpcruise_init()
     
         // initialise waypoint and spline controller
         wp_nav.wp_and_spline_init();
+        // calc current position
+        const Vector3f& curr_pos = inertial_nav.get_position();
+        // set target position
+        pos_control.set_xy_target(curr_pos.x, curr_pos.y);
         // set the waypoint as "fast"
         wp_nav.set_fast_waypoint(true);
 
@@ -30,29 +37,16 @@ bool Copter::wpcruise_init()
 
         Vector3f destination;
         // calc destination according to number of commands, if break point exists, number of commands equal to 3, if not, equal to 2
-        if (mission.num_commands() == 4)
-        {
+        if (mission.num_commands() == 4) {
             //set waypoint cruise state as "return to break point"
             wpcruise.state = RETURN_TO_BREAKPOINT;
-            // calculate break point position
-            calc_breakpoint_destination(destination);
-
         } else { 
-            mission.reset_counter();
-            // set first destination ans set state as "waypoint nav"
+            // set state as "waypoint nav"
             wpcruise.state = WAYPOINT_NAV;
-            update_waypoint_destination(destination);
         }
 
-        // set destination
-        if (g.sonar_alt_wp != 0 && sonar_enabled)
-        {
-            wp_nav.set_wp_xy_origin_and_destination(destination);
-            target_sonar_alt = destination.z;
-        }
-        else {
-            wp_nav.set_wp_destination(destination);
-        }
+        // set flag to init first destination
+        wpcruise.flag_init_destination = true;
         return true;
     } else {
         return false;
@@ -80,6 +74,10 @@ void Copter::wpcruise_run()
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
 
+        // get pilot desired climb rate (for alt-hold mode and take-off)
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        
         // check for take-off
         if (ap.land_complete && (takeoff_state.running || channel_throttle->control_in > get_takeoff_trigger_throttle())) {
             if (!takeoff_state.running) {
@@ -106,15 +104,40 @@ void Copter::wpcruise_run()
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(channel_throttle->control_in)-throttle_average);
         return;
     }else{
-            // recalc destination position
-            if (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old))
+            if (!failsafe.radio && wpcruise.flag_init_destination && (wpcruise.state != RETURN_TO_BREAKPOINT) && flag_recalc_wp_offset_direction)
+            {
+                // get pilot desired lean angles
+                float target_roll, target_pitch;
+                get_pilot_desired_lean_angles(channel_roll->control_in, channel_pitch->control_in, target_roll, target_pitch);
+                // 
+                if (target_roll > aparm.angle_max * ROLLIN_SET_WPCRUISE_DIRECTION_THRESHOLD) {
+                    mission.set_wp_direction(1);
+                } else if (target_roll < -aparm.angle_max * ROLLIN_SET_WPCRUISE_DIRECTION_THRESHOLD)
+                {
+                    mission.set_wp_direction(-1);
+                } else {
+                    // run loiter controller
+                    wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+                    // call attitude controller
+                    attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
+                    // call z-axis position controller
+                    pos_control.update_z_controller();
+                    return;
+                }
+            }
+            // calc destination position step by step
+            if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old)))
             {
                 Vector3f destination;
                 switch(wpcruise.state) {
                     // change state of waypoint cruise and delete breakpoint from storage
                     case RETURN_TO_BREAKPOINT:
+                    // calculate break point position
+                    calc_breakpoint_destination(destination);
                     wpcruise.state = WAYPOINT_NAV;
                     mission.truncate(3);
+                    break;
 
                     // update waypoint nav destination
                     case WAYPOINT_NAV:
@@ -129,6 +152,8 @@ void Copter::wpcruise_run()
                 else {
                     wp_nav.set_wp_destination(destination);
                 }
+
+                wpcruise.flag_init_destination = false;
             }
 
             wpcruise.flag_reach_destination_old = wp_nav.reached_wp_destination();

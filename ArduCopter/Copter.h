@@ -178,6 +178,10 @@ private:
     bool flag_reset_target_sonar_alt;
 #endif
 
+#if WPCRUISE_ENABLED == ENABLED
+    bool flag_recalc_wp_offset_direction;
+#endif
+
     AP_RPM rpm_sensor;
 
     // Inertial Navigation EKF
