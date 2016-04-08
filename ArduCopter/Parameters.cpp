@@ -1084,6 +1084,10 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Path: ../libraries/AP_RPM/AP_RPM.cpp
     GOBJECT(rpm_sensor, "RPM", AP_RPM),
 
+    // @Group: FlowSensor
+    // @Path: ../libraries/AP_FlowSensor/AP_FlowSensor.cpp
+    GOBJECT(flow_sensor, "FLOWS", AP_FlowSensor),
+
     // @Param: AUTOTUNE_AXES
     // @DisplayName: Autotune axis bitmask
     // @Description: 1-byte bitmap of axes to autotune

@@ -105,6 +105,7 @@
 #include <AP_LandingGear/AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain/AP_Terrain.h>
 #include <AP_RPM/AP_RPM.h>
+#include <AP_FlowSensor/AP_FlowSensor.h>
 #include <AC_InputManager/AC_InputManager.h>        // Pilot input handling library
 #include <AC_InputManager/AC_InputManager_Heli.h>   // Heli specific pilot input handling library
 
@@ -179,6 +180,8 @@ private:
 #endif
 
     AP_RPM rpm_sensor;
+
+    AP_FlowSensor flow_sensor;
 
     // Inertial Navigation EKF
     NavEKF EKF{&ahrs, barometer, sonar};
@@ -596,6 +599,7 @@ private:
     void send_rangefinder(mavlink_channel_t chan);
     void send_rpm(mavlink_channel_t chan);
     void rpm_update();
+    void flow_sensor_update();
     void send_pid_tuning(mavlink_channel_t chan);
     void send_statustext(mavlink_channel_t chan);
     bool telemetry_delayed(mavlink_channel_t chan);

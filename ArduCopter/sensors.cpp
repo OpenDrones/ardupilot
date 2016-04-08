@@ -82,6 +82,21 @@ void Copter::rpm_update(void)
     }
 }
 
+/*
+  update flow sensors
+ */
+void Copter::flow_sensor_update(void)
+{
+    flow_sensor.update();
+    /*
+    if (flow_sensor.healthy(0) || flow_sensor.healthy(1)) {
+        if (should_log(MASK_LOG_RCIN)) {
+            DataFlash.Log_Write_RPM(rpm_sensor);
+        }
+    }
+    */
+}
+
 // initialise compass
 void Copter::init_compass()
 {
