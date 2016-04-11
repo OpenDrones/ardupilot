@@ -26,13 +26,18 @@
 #include <AP_Math/AP_Math.h>
 #include <RC_Channel/RC_Channel.h>
 #include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AP_FlowSensor/AP_FlowSensor.h>     // flow sensor library
+#include <AP_AHRS/AP_AHRS_NavEKF.h>
+#include <AP_Motors/AP_Motors.h>
 
 #define AC_SPRAYER_DEFAULT_PUMP_RATE        10.0f   // default quantity of spray per meter travelled
 #define AC_SPRAYER_DEFAULT_PUMP_MIN         0       // default minimum pump speed expressed as a percentage from 0 to 100
 #define AC_SPRAYER_DEFAULT_SPINNER_PWM      1300    // default speed of spinner (higher means spray is throw further horizontally
 #define AC_SPRAYER_DEFAULT_SPEED_MIN        100     // we must be travelling at least 1m/s to begin spraying
 #define AC_SPRAYER_DEFAULT_TURN_ON_DELAY    100     // delay between when we reach the minimum speed and we begin spraying.  This reduces the likelihood of constantly turning on/off the pump
-#define AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY   1000    // shut-off delay in milli seconds.  This reduces the likelihood of constantly turning on/off the pump
+#define AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY   100     // shut-off delay in milli seconds.  This reduces the likelihood of constantly turning on/off the pump
+#define AC_SPRAYER_DEFAULT_AREA             0       // spraying area
+#define AC_SPRAYER_DEFAULT_WIDTH            300     // spraying width, cm
 
 /// @class  AC_Sprayer
 /// @brief  Object managing a crop sprayer comprised of a spinner and a pump both controlled by pwm
@@ -41,13 +46,18 @@ class AC_Sprayer {
 public:
 
     /// Constructor
-    AC_Sprayer(const AP_InertialNav* inav);
+    AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsensor, const AP_AHRS_NavEKF* ahrs, const AP_Motors* motors);
+
+    void init();
 
     /// enable - allows sprayer to be enabled/disabled.  Note: this does not update the eeprom saved value
     void enable(bool true_false);
 
     /// enabled - returns true if sprayer is enabled
     bool enabled() const { return _enabled; }
+
+    /// enabled - returns true if drain off detected
+    bool get_drain_off() const { return _flags.drain_off; }
 
     /// test_pump - set to true to turn on pump as if travelling at 1m/s as a test
     void test_pump(bool true_false) { _flags.testing = true_false; }
@@ -57,14 +67,19 @@ public:
     /// set_pump_rate - sets desired quantity of spray when travelling at 1m/s as a percentage of the pumps maximum rate
     void set_pump_rate(float pct_at_1ms) { _pump_pct_1ms.set(pct_at_1ms); }
 
+    float get_spray_area() const { return _current_total_area; }
+
     /// update - adjusts servo positions based on speed and requested quantity
     void update();
 
-    static const struct AP_Param::GroupInfo var_info[];
+    static const struct AP_Param::GroupInfo var_info[]; 
 
 private:
     // pointers to other objects we depend upon
     const AP_InertialNav* const _inav;
+    const AP_FlowSensor* const _flowsensor;
+    const AP_AHRS_NavEKF* const _ahrs;
+    const AP_Motors* const _motors;
 
     // parameters
     AP_Int8         _enabled;               // top level enable/disable control
@@ -72,16 +87,26 @@ private:
     AP_Int8         _pump_min_pct;          // minimum pump rate (expressed as a percentage from 0 to 100)
     AP_Int16        _spinner_pwm;           // pwm rate of spinner
     AP_Float        _speed_min;             // minimum speed in cm/s above which the sprayer will be started
+    AP_Int16        _turn_on_delay;
+    AP_Int16        _shut_off_delay;
+    AP_Int16        _width;
+    AP_Float        _area;
 
     // flag bitmask
     struct sprayer_flags_type {
-        uint8_t spraying    : 1;            // 1 if we are currently spraying
-        uint8_t testing     : 1;            // 1 if we are testing the sprayer and should output a minimum value
+        uint8_t spraying                : 1;            // true if we are currently spraying
+        uint8_t testing                 : 1;            // true if we are testing the sprayer and should output a minimum value
+        uint8_t drain_off               : 1;            // true if fluid drain off
+        uint8_t drain_off_precheck      : 1;            // true if drain off pre check is ok
     } _flags;
 
     // internal variables
     uint32_t        _speed_over_min_time;   // time at which we reached speed minimum
     uint32_t        _speed_under_min_time;  // time at which we fell below speed minimum
+    uint32_t        _spraying_last_time;    // last time at which record system time
+    bool            _armed;                 // moters arm status
+    float           _current_total_area;    // current total spraying area
+
 };
 
 #endif /* AC_SPRAYER_H */

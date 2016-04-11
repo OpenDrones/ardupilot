@@ -415,12 +415,13 @@ void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
  */
 void NOINLINE Copter::send_rpm(mavlink_channel_t chan)
 {
-    if (rpm_sensor.healthy(0) || rpm_sensor.healthy(1)) {
+    //if (rpm_sensor.healthy(0) || rpm_sensor.healthy(1)) {
         mavlink_msg_rpm_send(
             chan,
-            rpm_sensor.get_rpm(0),
+            //rpm_sensor.get_rpm(0),
+            flow_sensor.get_flow(0),
             rpm_sensor.get_rpm(1));
-    }
+    //}
 }
 
 
