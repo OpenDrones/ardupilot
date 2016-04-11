@@ -24,6 +24,8 @@
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_Baro/AP_Baro.h>
 #include <AP_BattMonitor/AP_BattMonitor.h>
+#include <AC_Sprayer/AC_Sprayer.h>
+#include <AP_Motors/AP_Motors.h>
 #include <AP_SerialManager/AP_SerialManager.h>
 
 /* FrSky sensor hub data IDs */
@@ -58,6 +60,10 @@
 #define FRSKY_ID_VFAS           0x39
 #define FRSKY_ID_VOLTS_BP       0x3A
 #define FRSKY_ID_VOLTS_AP       0x3B
+#define FRSKY_LAST_ID           0x3F
+#define D_RSSI_ID               0xF0
+#define D_A1_ID                 0xF1
+#define D_A2_ID                 0xF2
 
 // Default sensor data IDs (Physical IDs + CRC)
 #define DATA_ID_VARIO            0x00 // 0
@@ -74,7 +80,7 @@ class AP_Frsky_Telem
 {
 public:
     //constructor
-    AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery);
+    AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors);
 
     // supported protocols
     enum FrSkyProtocol {
@@ -121,13 +127,16 @@ private:
     // methods to send individual pieces of data down telemetry link
     void send_gps_sats(void);
     void send_mode(void);
+    void send_armed_stat(void);
     void send_baro_alt_m(void);
     void send_baro_alt_cm(void);
     void send_batt_remain(void);
     void send_batt_volts(void);
     void send_current(void);
+    void send_spraying_area(void);
     void send_prearm_error(void);
     void send_heading(void);
+    void send_gps_hdop(void);
     void send_gps_lat_dd(void);
     void send_gps_lat_mm(void);
     void send_gps_lat_ns(void);
@@ -141,6 +150,8 @@ private:
 
     AP_AHRS &_ahrs;                         // reference to attitude estimate
     AP_BattMonitor &_battery;               // reference to battery monitor object
+    AC_Sprayer &_sprayer;                   // reference to sprayer object
+    AP_Motors &_motors;                     // reference to motors object
     AP_HAL::UARTDriver *_port;              // UART used to send data to receiver
     bool _initialised_uart;                 // true when we have detected the protocol and UART has been initialised
     enum FrSkyProtocol _protocol;           // protocol used - detected using SerialManager's SERIALX_PROTOCOL parameter
@@ -154,8 +165,11 @@ private:
     uint16_t _batt_volts;
     uint16_t _batt_amps;
 
+    uint16_t _spraying_area_mu;
+
     bool _sats_data_ready;
-    uint16_t gps_sats;
+    uint16_t _gps_sats;
+    uint16_t _gps_hdop;
 
     bool _gps_data_ready;
     bool _pos_gps_ok;
@@ -176,6 +190,9 @@ private:
 
     bool _mode_data_ready;
     uint8_t _mode; 
+
+    bool _armed_data_ready;
+    uint8_t _armed_stat;
 
     uint8_t _fas_call;
     uint8_t _gps_call;

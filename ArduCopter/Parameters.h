@@ -351,6 +351,7 @@ public:
         k_param_rtl_climb_min,
         k_param_rpm_sensor,
         k_param_autotune_min_d, // 251
+        k_param_flow_sensor,
 
         // 254,255: reserved
     };

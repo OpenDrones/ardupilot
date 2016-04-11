@@ -24,9 +24,11 @@
 extern const AP_HAL::HAL& hal;
 
 //constructor
-AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery) :
+AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors) :
     _ahrs(ahrs),
     _battery(battery),
+    _sprayer(sprayer),
+    _motors(motors),
     _port(NULL),
     _initialised_uart(false),
     _protocol(FrSkyUnknown),
@@ -37,8 +39,10 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery) :
     _batt_remaining(0),
     _batt_volts(0),
     _batt_amps(0),
+    _spraying_area_mu(0),
     _sats_data_ready(false),
-    gps_sats(0),
+    _gps_sats(0),
+    _gps_hdop(0),
     _gps_data_ready(false),
     _pos_gps_ok(false),
     _course_in_degrees(0),
@@ -57,6 +61,8 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery) :
     _baro_alt_cm(0),
     _mode_data_ready(false),
     _mode(0),
+    _armed_data_ready(false),
+    _armed_stat(0),
     _fas_call(0),
     _gps_call(0),
     _vario_call(0),
@@ -107,9 +113,15 @@ void AP_Frsky_Telem::send_frames(uint8_t control_mode)
 
     if (_protocol == FrSkySPORT) {
         if (!_mode_data_ready) {
-            _mode=control_mode;
+            _mode = control_mode;
             _mode_data_ready = true;
         }
+
+        if (!_armed_data_ready) {
+            _armed_stat = _motors.armed()*100;
+            _armed_data_ready = true;
+        }
+
         if (!_baro_data_ready) {
             calc_baro_alt();
             _baro_data_ready = true;
@@ -235,9 +247,12 @@ void AP_Frsky_Telem::sport_tick(void)
                     case 1:
                         send_current();
                         break;
+                    case 2:
+                        send_spraying_area();
+                        break;
                     }
                     _fas_call++;
-                    if (_fas_call > 1) {
+                    if (_fas_call > 2) {
                         _fas_call = 0;
                     }
                     _battery_data_ready = false;
@@ -279,10 +294,13 @@ void AP_Frsky_Telem::sport_tick(void)
                     case 10:
                         send_heading();
                         break;
+                    case 11:
+                        send_gps_hdop();
+                        break;
                     }
 
                     _gps_call++;
-                    if (_gps_call > 10) {
+                    if (_gps_call > 11) {
                         _gps_call = 0;
                         _gps_data_ready = false;
                     }
@@ -319,9 +337,15 @@ void AP_Frsky_Telem::sport_tick(void)
                         _mode_data_ready = false;
                     }
                     break;
+                case 2:
+                    if ( _armed_data_ready ) {
+                        send_armed_stat();
+                        _armed_data_ready = false;
+                    }
+                    break;
                 }
                 _various_call++;
-                if (_various_call > 1) {
+                if (_various_call > 2) {
                     _various_call = 0;
                 }
                 break;
@@ -511,6 +535,9 @@ void AP_Frsky_Telem::calc_gps_position()
         speed = gps.ground_speed();
         _speed_in_meter = speed;
         _speed_in_centimeter = (speed - _speed_in_meter) * 100;
+
+        _gps_hdop = gps.get_hdop();
+        
     } else {
         _latdddmm = 0;
         _latmmmm = 0;
@@ -521,6 +548,7 @@ void AP_Frsky_Telem::calc_gps_position()
         _alt_gps_cm = 0;
         _speed_in_meter = 0;
         _speed_in_centimeter = 0;
+        _gps_hdop = 9999;
     }
 }
 
@@ -532,6 +560,7 @@ void AP_Frsky_Telem::calc_battery()
     _batt_remaining = roundf(_battery.capacity_remaining_pct());
     _batt_volts = roundf(_battery.voltage() * 10.0f);
     _batt_amps = roundf(_battery.current_amps() * 10.0f);
+    _spraying_area_mu = roundf(_sprayer.get_spray_area());
 }
 
 /*
@@ -541,7 +570,7 @@ void AP_Frsky_Telem::calc_gps_sats()
 {
     // GPS status is sent as num_sats*10 + status, to fit into a uint8_t
     const AP_GPS &gps = _ahrs.get_gps();
-    gps_sats = gps.num_sats() * 10 + gps.status();
+    _gps_sats = gps.num_sats() * 10 + gps.status();
 }
 
 /*
@@ -549,7 +578,7 @@ void AP_Frsky_Telem::calc_gps_sats()
  */
 void AP_Frsky_Telem::send_gps_sats()
 {
-    frsky_send_data(FRSKY_ID_TEMP2, gps_sats);
+    frsky_send_data(FRSKY_ID_TEMP2, _gps_sats);
 }
 
 /*
@@ -558,6 +587,14 @@ void AP_Frsky_Telem::send_gps_sats()
 void AP_Frsky_Telem::send_mode(void)
 {
     frsky_send_data(FRSKY_ID_TEMP1, _mode);
+}
+
+/*
+ * send armed status as accy (ACCEL_Y)
+ */
+void AP_Frsky_Telem::send_armed_stat(void)
+{
+    frsky_send_data(FRSKY_ID_ACCEL_Y, _armed_stat);
 }
 
 /*
@@ -601,11 +638,27 @@ void AP_Frsky_Telem::send_current(void)
 }
 
 /*
+ * send spray area 
+ */
+void AP_Frsky_Telem::send_spraying_area(void)
+{
+    frsky_send_data(FRSKY_ID_FUEL, _spraying_area_mu);
+}
+
+/*
  * send heading in degree based on AHRS and not GPS 
  */
 void AP_Frsky_Telem::send_heading(void)
 {
     frsky_send_data(FRSKY_ID_GPS_COURS_BP, _course_in_degrees);
+}
+
+/*
+ * send hdop  
+ */
+void AP_Frsky_Telem::send_gps_hdop(void)
+{
+    frsky_send_data(FRSKY_ID_ACCEL_X, _gps_hdop);
 }
 
 /*
