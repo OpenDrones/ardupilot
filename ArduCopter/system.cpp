@@ -250,6 +250,10 @@ void Copter::init_ardupilot()
 
     // initialise AP_FlowSensor library
     flow_sensor.init();
+    // Crop Sprayer
+#if SPRAYER == ENABLED
+    sprayer.init();
+#endif
 
     // initialise mission library
     mission.init();

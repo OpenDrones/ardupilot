@@ -68,7 +68,7 @@ public:
     /*
       return flow for a sensor. Return -1 if not healthy
      */
-    float get_flowsensor(uint8_t instance) const {
+    float get_flow(uint8_t instance) const {
         if (!healthy(instance)) {
             return -1;
         }

@@ -67,7 +67,7 @@ Copter::Copter(void) :
     loiter_time_max(0),
     loiter_time(0),
 #if FRSKY_TELEM_ENABLED == ENABLED
-    frsky_telemetry(ahrs, battery),
+    frsky_telemetry(ahrs, battery, sprayer, motors),
 #endif
     climb_rate(0),
     sonar_alt(0),
@@ -117,7 +117,7 @@ Copter::Copter(void) :
     rally(ahrs),
 #endif
 #if SPRAYER == ENABLED
-    sprayer(&inertial_nav),
+    sprayer(&inertial_nav, &flow_sensor, &ahrs, &motors),
 #endif
 #if PARACHUTE == ENABLED
     parachute(relay),

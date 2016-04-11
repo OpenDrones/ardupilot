@@ -47,16 +47,67 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("PUMP_MIN",   4, AC_Sprayer, _pump_min_pct, AC_SPRAYER_DEFAULT_PUMP_MIN),
 
+    // @Param: TON_DLY
+    // @DisplayName: Turn on delay
+    // @Description: delay between when we reach the minimum speed and we begin spraying.
+    // @Units: ms
+    // @Range: 0 5000
+    // @User: Standard
+    AP_GROUPINFO("TON_DLY",   5, AC_Sprayer, _turn_on_delay, AC_SPRAYER_DEFAULT_TURN_ON_DELAY),
+
+    // @Param: PUMP_MIN
+    // @DisplayName: Pump speed minimum
+    // @Description: Minimum pump speed expressed as a percentage
+    // @Units: percentage
+    // @Range: 0 100
+    // @User: Standard
+    AP_GROUPINFO("SOFF_DLY",   6, AC_Sprayer, _shut_off_delay, AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY),
+
+    // @Param: WIDTH
+    // @DisplayName: spray width
+    // @Description: spray width
+    // @Units: cm
+    // @Range: 0 10000
+    // @User: Standard
+    AP_GROUPINFO("WIDTH",   7, AC_Sprayer, _width, AC_SPRAYER_DEFAULT_WIDTH),
+
+    // @Param: AREA
+    // @DisplayName: spray area
+    // @Description: accumulative total spray area
+    // @Units: mu
+    // @Range: 0 500000.00
+    // @User: Standard
+    AP_GROUPINFO("AREA",   8, AC_Sprayer, _area, AC_SPRAYER_DEFAULT_AREA),
+
     AP_GROUPEND
 };
 
-AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav) :
+AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsensor, const AP_AHRS_NavEKF* ahrs, const AP_Motors* motors) :
     _inav(inav),
+    _flowsensor(flowsensor),
+    _ahrs(ahrs),
+    _motors(motors),
     _speed_over_min_time(0),
-    _speed_under_min_time(0)
-{
+    _speed_under_min_time(0),
+    _spraying_last_time(0),
+    _armed(false)
+
+{   
     AP_Param::setup_object_defaults(this, var_info);
 
+
+    // initialise flags
+    _flags.spraying = false;
+    _flags.testing = false;
+    _flags.drain_off = false;
+    _flags.drain_off_precheck = false;
+
+    // To-Do: ensure that the pump and spinner servo channels are enabled
+}
+
+void 
+AC_Sprayer::init()
+{
     // check for silly parameter values
     if (_pump_pct_1ms < 0.0f || _pump_pct_1ms > 100.0f) {
         _pump_pct_1ms.set_and_save(AC_SPRAYER_DEFAULT_PUMP_RATE);
@@ -64,15 +115,12 @@ AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav) :
     if (_spinner_pwm < 0) {
         _spinner_pwm.set_and_save(AC_SPRAYER_DEFAULT_SPINNER_PWM);
     }
-
-    // initialise flags
-    _flags.spraying = false;
-    _flags.testing = false;
-
-    // To-Do: ensure that the pump and spinner servo channels are enabled
+    
+    _current_total_area = _area;
 }
 
-void AC_Sprayer::enable(bool true_false)
+void 
+AC_Sprayer::enable(bool true_false)
 {
     // return immediately if no change
     if (true_false == _enabled) {
@@ -91,6 +139,8 @@ void AC_Sprayer::enable(bool true_false)
         // send output to spinner channel
         // To-Do: change 0 below to radio_min of spinner servo
         RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_spinner);
+
+        _spraying_last_time = 0;
     }
 }
 
@@ -99,12 +149,19 @@ void
 AC_Sprayer::update()
 {
     uint32_t now;
-    float ground_speed;
+    float vel_fwd_abs;
+    
+    if ( (_motors->armed() != _armed) && (_motors->armed() == false) ) {
+        _area.set_and_save(_current_total_area);  
+    }
+    _armed = _motors->armed();
+
 
     // exit immediately if we are disabled (perhaps set pwm values back to defaults)
     if (!_enabled) {
         return;
     }
+
 
     // exit immediately if the pump function has not been set-up for any servo
     if (!RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump)) {
@@ -113,13 +170,18 @@ AC_Sprayer::update()
 
     // get horizontal velocity
     const Vector3f &velocity = _inav->get_velocity();
-    ground_speed = pythagorous2(velocity.x,velocity.y);
+
+    // convert inertial nav earth-frame velocities_cm/s to body-frame
+    vel_fwd_abs = abs(velocity.x * _ahrs->cos_yaw() + velocity.y * _ahrs->sin_yaw());
 
     // get the current time
     now = hal.scheduler->millis();
 
+    //get spraying flow 
+    const float flow = _flowsensor->get_flow(0);
+
     // check our speed vs the minimum
-    if (ground_speed >= _speed_min) {
+    if (vel_fwd_abs >= _speed_min) {
         // if we are not already spraying
         if (!_flags.spraying) {
             // set the timer if this is the first time we've surpassed the min speed
@@ -127,7 +189,7 @@ AC_Sprayer::update()
                 _speed_over_min_time = now;
             }else{
                 // check if we've been over the speed long enough to engage the sprayer
-                if((now - _speed_over_min_time) > AC_SPRAYER_DEFAULT_TURN_ON_DELAY) {
+                if((now - _speed_over_min_time) > (uint32_t)_turn_on_delay) {
                     _flags.spraying = true;
                     _speed_over_min_time = 0;
                 }
@@ -143,7 +205,7 @@ AC_Sprayer::update()
                 _speed_under_min_time = now;
             }else{
                 // check if we've been over the speed long enough to engage the sprayer
-                if((now - _speed_under_min_time) > AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY) {
+                if((now - _speed_under_min_time) > (uint32_t)_shut_off_delay) {
                     _flags.spraying = false;
                     _speed_under_min_time = 0;
                 }
@@ -153,14 +215,38 @@ AC_Sprayer::update()
         _speed_over_min_time = 0;
     }
 
-    // if testing pump output speed as if travelling at 1m/s
-    if (_flags.testing) {
-        ground_speed = 100.0f;
+    // detect drain off
+    if (_flags.spraying) {
+        if ( flow == -1 && _flags.drain_off_precheck == true) {
+            _flags.drain_off = true;
+            _flags.drain_off_precheck = false;           
+        } else {
+            _flags.drain_off = false;
+            _flags.drain_off_precheck = true;
+        }
     }
 
-    // if spraying or testing update the pump servo position
+    // calculate spray area
+    if (_flags.spraying && flow != -1) {
+        if (_spraying_last_time == 0) {
+            _spraying_last_time = now;
+        } else {
+            _current_total_area += ( vel_fwd_abs * (float)(now - _spraying_last_time) * (float)_width )/ (1.0e7f * 666.7f);
+            _spraying_last_time = now;
+        }
+    } else {
+        _spraying_last_time = 0;
+    }
+
+
+    // if testing pump output speed as if travelling at 1m/s
+    if (_flags.testing) {
+        vel_fwd_abs = 100.0f;
+    }
+
+    // if spraying or testing update the pump rate percent, for radio direct pwm control（50Hz）, 100% duty -> 20000us
     if (_flags.spraying || _flags.testing) {        
-        RC_Channel_aux::move_servo(RC_Channel_aux::k_sprayer_pump, min(max(ground_speed * _pump_pct_1ms, 100 *_pump_min_pct),10000),0,10000);
+        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min(max(2 * vel_fwd_abs * _pump_pct_1ms, 100 *_pump_min_pct),20000));
         RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
     }else{
         // ensure sprayer and spinner are off

@@ -419,7 +419,7 @@ void NOINLINE Copter::send_rpm(mavlink_channel_t chan)
         mavlink_msg_rpm_send(
             chan,
             //rpm_sensor.get_rpm(0),
-            flow_sensor.get_flowsensor(0),
+            flow_sensor.get_flow(0),
             rpm_sensor.get_rpm(1));
     //}
 }
