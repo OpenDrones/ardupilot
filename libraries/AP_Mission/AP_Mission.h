@@ -43,7 +43,7 @@
 #define AP_MISSION_FIRST_REAL_COMMAND       1       // command #0 reserved to hold home position
 
 #define AP_MISSION_RESTART_DEFAULT          0       // resume the mission from the last command run by default
-#define AP_MISSION_DISTANCE_DEFAULT         4     // default distance in AB auto-waypoint mode
+#define AP_MISSION_DISTANCE_DEFAULT         400     // default distance in AB auto-waypoint mode
 #define AP_MISSION_COUNT_DEFAULT            1       // default counter in AB auto-waypoint mode
 
 #define AP_WAYPOINT_CRUISE_A_INDEX          1       // position of point A in memory
@@ -310,7 +310,7 @@ public:
     void truncate(uint16_t index);
 
     // _count = _count - 1
-    void truncate_counter_one() { _count.set_and_save(_count - 1); }
+    void truncate_counter_one() { _count.set_and_save(max(1,_count - 1)); }
 
     /// update - ensures the command queues are loaded with the next command and calls main programs command_init and command_verify functions to progress the mission
     ///     should be called at 10hz or higher
@@ -464,7 +464,7 @@ private:
     // parameters
     AP_Int16                _cmd_total;  // total number of commands in the mission
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
-    AP_Int16                _distance;  // distance in AB auto-waypoint mode
+    AP_Int16                _distance_cm;  // distance in AB auto-waypoint mode
     AP_Int16                _count;     // count of waypoint in AB auto-waypoint mode
     AP_Int8                 _offset_direction; // offset direction in AB auto-waypoint mode
 

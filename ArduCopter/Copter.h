@@ -180,6 +180,7 @@ private:
 
 #if WPCRUISE_ENABLED == ENABLED
     bool flag_recalc_wp_offset_direction;
+    Wpcruisestate WpCruise_state;
 #endif
 
     AP_RPM rpm_sensor;
@@ -914,6 +915,8 @@ private:
     void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag);
     void save_trim();
     void auto_trim();
+    void save_add_waypoint();
+    void clear_and_save_waypoint();
     void init_ardupilot();
     void startup_ground(bool force_gyro_cal);
     bool position_ok();

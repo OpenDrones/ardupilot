@@ -226,7 +226,7 @@ public:
 	void advance_wp_xy_target_along_track(float dt);
 
     // calculate current target altitude according to current xy position
-    float calc_curr_target_z();
+    // float calc_curr_target_z();
 
     static const struct AP_Param::GroupInfo var_info[];
 

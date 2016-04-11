@@ -229,6 +229,13 @@ enum FlipState {
     Flip_Abandon
 };
 
+// Wpcruise states
+enum Wpcruisestate {
+    Return_Bp_Loiter,
+    Return_Bp_Wp_Nav,
+    Waypoint_Nav  
+};
+
 // LAND state
 #define LAND_STATE_FLY_TO_LOCATION  0
 #define LAND_STATE_DESCENDING       1

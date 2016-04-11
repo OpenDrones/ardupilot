@@ -6,22 +6,18 @@
 
 #define ROLLIN_SET_WPCRUISE_DIRECTION_THRESHOLD 0.5f
 
-enum state_wp_cruise {
-    RETURN_TO_BREAKPOINT = 0,
-    WAYPOINT_NAV
-    };
 static struct {
     // flag to set destination
-    uint8_t flag_reach_destination_old;               // old flag of reaching destination
-    uint8_t flag_init_destination;                    // flag to initialize first destination when changing into WPCRUISE
-    state_wp_cruise state;
+    uint8_t flag_reach_destination_old          : 1;               // old flag of reaching destination
+    uint8_t flag_init_destination               : 1;                    // flag to initialize first destination when changing into WPCRUISE
+    
 } wpcruise;
 
 // wpcruise_init - initialise Waypoint Cruise controller
 bool Copter::wpcruise_init()
 {
     // fail to initialise Waypoint Cruise mode if no GPS lock or AB points not exist
-    if (position_ok() && (mission.num_commands() == 3 || mission.num_commands() == 4)) {
+    if (position_ok() && (mission.num_commands() ==2 || mission.num_commands() == 3 || mission.num_commands() == 4)) {
     
         // initialise waypoint and spline controller
         wp_nav.wp_and_spline_init();
@@ -29,22 +25,25 @@ bool Copter::wpcruise_init()
         const Vector3f& curr_pos = inertial_nav.get_position();
         // set target position
         pos_control.set_xy_target(curr_pos.x, curr_pos.y);
+        pos_control.set_alt_target(inertial_nav.get_altitude());
         // set the waypoint as "fast"
         wp_nav.set_fast_waypoint(true);
 
         // init old flag
         wpcruise.flag_reach_destination_old = true;
 
-        Vector3f destination;
-        // calc destination according to number of commands, if break point exists, number of commands equal to 3, if not, equal to 2
-        if (mission.num_commands() == 4) {
-            //set waypoint cruise state as "return to break point"
-            wpcruise.state = RETURN_TO_BREAKPOINT;
-        } else { 
-            // set state as "waypoint nav"
-            wpcruise.state = WAYPOINT_NAV;
-        }
-
+        if (mission.num_commands() == 2) {
+            // return to breakpoint and loiter in mannual flight mode
+            WpCruise_state = Return_Bp_Loiter;
+         } else if (mission.num_commands() == 3) {
+                // breakpoint don't exist, start AB cruise directly
+                WpCruise_state = Waypoint_Nav;
+                // enable sprayer
+            }  else {
+                // breakpoint exist in WpCruise mode, return to breakpoint first and then continue AB cruise
+                WpCruise_state = Return_Bp_Wp_Nav;
+            }
+        
         // set flag to init first destination
         wpcruise.flag_init_destination = true;
         return true;
@@ -104,7 +103,7 @@ void Copter::wpcruise_run()
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(channel_throttle->control_in)-throttle_average);
         return;
     }else{
-            if (!failsafe.radio && wpcruise.flag_init_destination && (wpcruise.state != RETURN_TO_BREAKPOINT) && flag_recalc_wp_offset_direction)
+            if (wpcruise.flag_init_destination && (WpCruise_state != Return_Bp_Loiter) && flag_recalc_wp_offset_direction)
             {
                 // get pilot desired lean angles
                 float target_roll, target_pitch;
@@ -126,21 +125,32 @@ void Copter::wpcruise_run()
                     return;
                 }
             }
+
+            // set flying state to loiter and disable sprayer when flow break
+            // set current stopping position as destination and loiter
+
             // calc destination position step by step
             if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old)))
             {
                 Vector3f destination;
-                switch(wpcruise.state) {
+                switch(WpCruise_state) {
+                    // return to breakpoint and loiter in mannual flight mode
+                    case Return_Bp_Loiter:
+                    calc_breakpoint_destination(destination);
+                    break;
                     // change state of waypoint cruise and delete breakpoint from storage
-                    case RETURN_TO_BREAKPOINT:
+                    case Return_Bp_Wp_Nav:
                     // calculate break point position
                     calc_breakpoint_destination(destination);
-                    wpcruise.state = WAYPOINT_NAV;
-                    mission.truncate(3);
+                    WpCruise_state = Waypoint_Nav;
+                    // enable sprayer
                     break;
-
                     // update waypoint nav destination
-                    case WAYPOINT_NAV:
+                    case Waypoint_Nav:
+                    if (mission.num_commands() == 4)
+                    {
+                        mission.truncate(3);
+                    }
                     update_waypoint_destination(destination);
                     break;
                 }
@@ -189,13 +199,13 @@ void Copter::calc_breakpoint_destination(Vector3f& destination)
 {
     // read break point from storage
     AP_Mission::Mission_Command cmd;
-    if (mission.read_cmd_from_storage(3, cmd))
+    if (mission.read_cmd_from_storage((mission.num_commands()-1), cmd))
     {
         const Vector3f &curr_pos = inertial_nav.get_position();
         destination = pv_location_to_vector_with_default(cmd.content.location, curr_pos);
 
         if (g.sonar_alt_wp != 0 && sonar_enabled) {
-            destination.z = cmd.content.location.alt;
+            destination.z = max(1.0, cmd.content.location.alt);
         }
     }
 }
@@ -208,7 +218,7 @@ void Copter::calc_breakpoint_destination(Vector3f& destination)
     destination = pv_location_to_vector_with_default(destination_loc, curr_pos);
 
     if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        destination.z = destination_loc.alt;
+        destination.z = max(1.0, destination_loc.alt);
     }
  }
 #endif   // WPCRUISE_ENABLED == ENABLED

@@ -26,7 +26,7 @@ const AP_Param::GroupInfo AP_Mission::var_info[] PROGMEM = {
     // @DisplayName: Distance in AB auto-waypoint mode
     // @Description: 
     // @Values:   unit:cm 
-    AP_GROUPINFO("DISTANCE",  2, AP_Mission, _distance, AP_MISSION_DISTANCE_DEFAULT),
+    AP_GROUPINFO("DISTANCE",  2, AP_Mission, _distance_cm, AP_MISSION_DISTANCE_DEFAULT),
 
     // @Param: COUNT
     // @DisplayName: 
@@ -1468,14 +1468,14 @@ bool AP_Mission::calc_destination_pos(Location &loc)
         case 0:
         case 1:
         loc = cmd2.content.location;
-        location_update(loc, bearing_offset/100, distance_mount*_distance);
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100);
         break;
 
         // calc destination according to point A from storage
         case 2:
         case 3:
         loc = cmd1.content.location;
-        location_update(loc, bearing_offset/100, distance_mount*_distance);
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100);
         break;
     }
     return true;

@@ -1238,7 +1238,7 @@ float AC_WPNav::get_slow_down_speed(float dist_from_dest_cm, float accel_cmss)
     }
 }
 
-// calculate current target altitude according to current xy position
+/* calculate current target altitude according to current xy position
 float AC_WPNav::calc_curr_target_z()
 {
     float track_covered;
@@ -1249,4 +1249,4 @@ float AC_WPNav::calc_curr_target_z()
     // calculate how far along the track we are
     track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y;
     return _origin.z + (track_covered/_track_length)*(_destination.z - _origin.z);
-}
+}*/

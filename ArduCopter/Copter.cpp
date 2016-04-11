@@ -26,7 +26,7 @@ Copter::Copter(void) :
     flight_modes(&g.flight_mode1),
     sonar_enabled(true),
     flag_reset_target_sonar_alt(true),
-    flag_recalc_wp_offset_direction(true),
+    flag_recalc_wp_offset_direction(false),
     mission(ahrs, 
             FUNCTOR_BIND_MEMBER(&Copter::start_command, bool, const AP_Mission::Mission_Command &),
             FUNCTOR_BIND_MEMBER(&Copter::verify_command_callback, bool, const AP_Mission::Mission_Command &),
