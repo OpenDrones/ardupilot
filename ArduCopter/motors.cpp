@@ -175,7 +175,7 @@ bool Copter::init_arm_motors(bool arming_from_gcs)
         startup_ground(true);
         // final check that gyros calibrated successfully
         if (((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_INS)) && !ins.gyro_calibrated_ok_all()) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Gyro calibration failed"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 陀螺仪校准失败"));
             AP_Notify::flags.armed = false;
             failsafe_enable();
             in_arm_motors = false;
@@ -234,7 +234,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     // at the same time.  This cannot be allowed.
     if (check_if_auxsw_mode_used(AUXSW_MOTOR_INTERLOCK) && check_if_auxsw_mode_used(AUXSW_MOTOR_ESTOP)){
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Interlock/E-Stop Conflict"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 电机互锁/急停开关错误"));
         }
         return false;
     }
@@ -258,7 +258,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     pre_arm_rc_checks();
     if(!ap.pre_arm_rc_check) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: RC not calibrated"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 遥控器未校准"));
         }
         return false;
     }
@@ -267,7 +267,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // barometer health check
         if(!barometer.all_healthy()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Barometer not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 气压计不正常"));
             }
             return false;
         }
@@ -279,7 +279,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         if (using_baro_ref) {
             if (fabsf(inertial_nav.get_altitude() - baro_alt) > PREARM_MAX_ALT_DISPARITY_CM) {
                 if (display_failure) {
-                    gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Altitude disparity"));
+                    gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 高度计算不一致"));
                 }
                 return false;
             }
@@ -291,7 +291,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check the primary compass is healthy
         if(!compass.healthy()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 罗盘不正常"));
             }
             return false;
         }
@@ -299,7 +299,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check compass learning is on or offsets have been set
         if(!compass.configured()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not calibrated"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 罗盘未校准"));
             }
             return false;
         }
@@ -308,7 +308,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         Vector3f offsets = compass.get_offsets();
         if(offsets.length() > COMPASS_OFFSETS_MAX) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass offsets too high"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 罗盘偏移量太大"));
             }
             return false;
         }
@@ -317,7 +317,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         float mag_field = compass.get_field().length();
         if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65f || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35f) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 罗盘干扰"));
             }
             return false;
         }
@@ -325,7 +325,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check all compasses point in roughly same direction
         if (!compass.consistent()) {
                     if (display_failure) {
-                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
+                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 罗盘不一致"));
                     }
                     return false;
                 }
@@ -341,7 +341,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     // check fence is initialised
     if(!fence.pre_arm_check()) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: check fence"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查围栏"));
         }
         return false;
     }
@@ -352,7 +352,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check accelerometers have been calibrated
         if(!ins.accel_calibrated_ok_all()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Accels not calibrated"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 加速度计未校准"));
             }
             return false;
         }
@@ -360,7 +360,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check accels are healthy
         if(!ins.get_accel_health_all()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Accelerometers not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 加速度计不正常"));
             }
             return false;
         }
@@ -384,7 +384,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                 }
                 if (vec_diff.length() > threshold) {
                     if (display_failure) {
-                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent Accelerometers"));
+                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 加速度计不一致"));
                     }
                     return false;
                 }
@@ -395,7 +395,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check gyros are healthy
         if(!ins.get_gyro_health_all()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Gyros not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 陀螺仪不正常"));
             }
             return false;
         }
@@ -408,7 +408,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                 Vector3f vec_diff = ins.get_gyro(i) - ins.get_gyro();
                 if (vec_diff.length() > PREARM_MAX_GYRO_VECTOR_DIFF) {
                     if (display_failure) {
-                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent Gyros"));
+                        gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 陀螺仪不一致"));
                     }
                     return false;
                 }
@@ -422,7 +422,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     if ((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_VOLTAGE)) {
         if(hal.analogin->board_voltage() < BOARD_VOLTAGE_MIN || hal.analogin->board_voltage() > BOARD_VOLTAGE_MAX) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Board Voltage"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查芯片电压"));
             }
             return false;
         }
@@ -434,7 +434,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     if ((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_VOLTAGE)) {
         if (failsafe.battery || (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah))) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Battery"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查电池"));
             }
             return false;
         }
@@ -446,7 +446,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // ensure ch7 and ch8 have different functions
         if (check_duplicate_auxsw()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Duplicate Aux Switch Options"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: CH7-12 功能设置重复"));
             }
             return false;
         }
@@ -456,7 +456,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             // check throttle min is above throttle failsafe trigger and that the trigger is above ppm encoder's loss-of-signal value of 900
             if (channel_throttle->radio_min <= g.failsafe_throttle_value+10 || g.failsafe_throttle_value < 910) {
                 if (display_failure) {
-                    gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check FS_THR_VALUE"));
+                    gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm:  检查参数 FS_THR_VALUE"));
                 }
                 return false;
             }
@@ -465,7 +465,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // lean angle parameter check
         if (aparm.angle_max < 1000 || aparm.angle_max > 8000) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check ANGLE_MAX"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查参数 ANGLE_MAX"));
             }
             return false;
         }
@@ -473,7 +473,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // acro balance parameter check
         if ((g.acro_balance_roll > g.p_stabilize_roll.kP()) || (g.acro_balance_pitch > g.p_stabilize_pitch.kP())) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: ACRO_BAL_ROLL/PITCH"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查参数 ACRO_BAL_ROLL/PITCH"));
             }
             return false;
         }
@@ -482,7 +482,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check range finder if optflow enabled
         if (optflow.enabled() && !sonar.pre_arm_check()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: check range finder"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查测距模块"));
             }
             return false;
         }
@@ -491,7 +491,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         // check helicopter parameters
         if (!motors.parameter_check()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Heli Parameters"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 检查 Heli 参数"));
             }
             return false;
         }
@@ -506,7 +506,7 @@ bool Copter::pre_arm_checks(bool display_failure)
     #if FRAME_CONFIG == HELI_FRAME
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Collective below Failsafe"));
     #else
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Throttle below Failsafe"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 油门低于故障阈值"));
     #endif
             }
             return false;
@@ -567,7 +567,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     // always check if inertial nav has started and is ready
     if(!ahrs.get_NavEKF().healthy()) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Waiting for Nav Checks"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: 等待导航校验"));
         }
         return false;
     }
@@ -595,7 +595,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
             if (reason) {
                 GCS_MAVLINK::send_statustext_all(SEVERITY_HIGH, PSTR("PreArm: %s"), reason);
             } else {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Need 3D Fix"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: GPS需要3D Fix"));
         }
         }
         AP_Notify::flags.pre_arm_gps_check = false;
@@ -609,7 +609,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     ahrs.get_NavEKF().getVariances(vel_variance, pos_variance, hgt_variance, mag_variance, tas_variance, offset);
     if (mag_variance.length() >= g.fs_ekf_thresh) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF compass variance"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF 罗盘校验"));
         }
         return false;
     }
@@ -617,7 +617,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     // check home and EKF origin are not too far
     if (far_from_EKF_origin(ahrs.get_home())) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF-home variance"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF-home 位置校验"));
         }
         AP_Notify::flags.pre_arm_gps_check = false;
         return false;
@@ -632,7 +632,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     // warn about hdop separately - to prevent user confusion with no gps lock
     if (gps.get_hdop() > g.gps_hdop_good) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: High GPS HDOP"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: GPS HDOP高"));
         }
         AP_Notify::flags.pre_arm_gps_check = false;
         return false;
@@ -657,13 +657,13 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     if ((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_INS)) {
         if(!ins.get_accel_health_all()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Accelerometers not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 加速度计不正常"));
             }
             return false;
         }
         if(!ins.get_gyro_health_all()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Gyros not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 陀螺仪不正常"));
             }
             return false;
         }
@@ -672,7 +672,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     // always check if inertial nav has started and is ready
     if(!ahrs.healthy()) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Waiting for Nav Checks"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 等待导航校验"));
         }
         return false;
     }
@@ -680,7 +680,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     // always check if the current mode allows arming
     if (!mode_allows_arming(control_mode, arming_from_gcs)) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Mode not armable"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 飞行模式不可解锁"));
         }
         return false;
     }
@@ -703,7 +703,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
 
     // if we are using motor interlock switch and it's enabled, fail to arm
     if (ap.using_interlock && motors.get_interlock()){
-        gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Motor Interlock Enabled"));
+        gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 电机互锁"));
         AP_Notify::flags.armed = false;
         return false;
     }
@@ -714,7 +714,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         set_motor_emergency_stop(false);
     // if we are using motor Estop switch, it must not be in Estop position
     } else if (check_if_auxsw_mode_used(AUXSW_MOTOR_ESTOP) && ap.motor_emergency_stop){
-        gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Motor Emergency Stopped"));
+        gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 电机急停"));
         return false;
     }
 
@@ -728,7 +728,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         // baro health check
         if (!barometer.all_healthy()) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Barometer not healthy"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 气压计不正常"));
             }
             return false;
         }
@@ -739,7 +739,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         bool using_baro_ref = (!filt_status.flags.pred_horiz_pos_rel && filt_status.flags.pred_horiz_pos_abs);
         if (using_baro_ref && (fabsf(inertial_nav.get_altitude() - baro_alt) > PREARM_MAX_ALT_DISPARITY_CM)) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Altitude disparity"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 高度计算不一致"));
             }
             return false;
         }
@@ -749,7 +749,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     // check vehicle is within fence
     if(!fence.pre_arm_check()) {
         if (display_failure) {
-            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: check fence"));
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 检查围栏"));
         }
         return false;
     }
@@ -769,7 +769,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     if ((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_VOLTAGE)) {
         if (failsafe.battery || (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah))) {
             if (display_failure) {
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Check Battery"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 检查电池"));
             }
             return false;
         }
@@ -783,7 +783,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
 #if FRAME_CONFIG == HELI_FRAME
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Collective below Failsafe"));
 #else
-                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Throttle below Failsafe"));
+                gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: 油门低于故障阈值"));
 #endif
             }
             return false;
