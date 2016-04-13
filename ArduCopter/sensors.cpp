@@ -4,13 +4,13 @@
 
 void Copter::init_barometer(bool full_calibration)
 {
-    gcs_send_text_P(SEVERITY_LOW, PSTR("气压计校准"));
+    gcs_send_text_P(SEVERITY_LOW, PSTR("Calibrating barometer"));
     if (full_calibration) {
         barometer.calibrate();
     }else{
         barometer.update_calibration();
     }
-    gcs_send_text_P(SEVERITY_LOW, PSTR("气压计校准完成"));
+    gcs_send_text_P(SEVERITY_LOW, PSTR("barometer calibration complete"));
 }
 
 // return barometric altitude in centimeters
@@ -63,9 +63,7 @@ int16_t Copter::read_sonar(void)
     temp_alt = (float)temp_alt * temp;
  #endif
 
-	int16_t temp_alt_filter = sonar_filter.filter((float)temp_alt);
-	return temp_alt_filter;
-    //return temp_alt;
+    return temp_alt;
 #else
     return 0;
 #endif
