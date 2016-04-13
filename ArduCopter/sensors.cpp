@@ -63,7 +63,9 @@ int16_t Copter::read_sonar(void)
     temp_alt = (float)temp_alt * temp;
  #endif
 
-    return temp_alt;
+	int16_t temp_alt_filter = sonar_filter.filter((float)temp_alt);
+	return temp_alt_filter;
+    //return temp_alt;
 #else
     return 0;
 #endif

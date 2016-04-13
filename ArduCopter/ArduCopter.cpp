@@ -627,6 +627,8 @@ void Copter::update_altitude()
     // read in sonar altitude
     sonar_alt           = read_sonar();
 
+    frsky_telemetry.calc_sonar_alt(sonar_alt);
+    
     // write altitude info to dataflash logs
     if (should_log(MASK_LOG_CTUN)) {
         Log_Write_Control_Tuning();
