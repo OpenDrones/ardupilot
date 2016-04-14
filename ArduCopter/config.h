@@ -181,7 +181,7 @@
 #endif
 
 #ifndef SONAR_TILT_CORRECTION               // by disable tilt correction for use of range finder data by EKF
- # define SONAR_TILT_CORRECTION DISABLED
+ # define SONAR_TILT_CORRECTION ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

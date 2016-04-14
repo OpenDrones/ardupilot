@@ -68,7 +68,7 @@ Copter::Copter(void) :
     loiter_time_max(0),
     loiter_time(0),
 #if FRSKY_TELEM_ENABLED == ENABLED
-    frsky_telemetry(ahrs, battery, sprayer, motors),
+    frsky_telemetry(ahrs, battery, sprayer, motors, mission, flow_sensor),
 #endif
     climb_rate(0),
     sonar_alt(0),

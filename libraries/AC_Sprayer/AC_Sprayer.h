@@ -91,6 +91,7 @@ private:
     AP_Int16        _shut_off_delay;
     AP_Int16        _width;
     AP_Float        _area;
+    AP_Int16        _drain_off_delay;
 
     // flag bitmask
     struct sprayer_flags_type {
@@ -103,6 +104,7 @@ private:
     // internal variables
     uint32_t        _speed_over_min_time;   // time at which we reached speed minimum
     uint32_t        _speed_under_min_time;  // time at which we fell below speed minimum
+    uint32_t        _drain_off_pre_time;  // time at which we fell below speed minimum
     uint32_t        _spraying_last_time;    // last time at which record system time
     bool            _armed;                 // moters arm status
     float           _current_total_area;    // current total spraying area

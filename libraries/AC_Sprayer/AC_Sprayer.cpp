@@ -55,11 +55,11 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("TON_DLY",   5, AC_Sprayer, _turn_on_delay, AC_SPRAYER_DEFAULT_TURN_ON_DELAY),
 
-    // @Param: PUMP_MIN
-    // @DisplayName: Pump speed minimum
-    // @Description: Minimum pump speed expressed as a percentage
-    // @Units: percentage
-    // @Range: 0 100
+    // @Param: SOFF_DLY
+    // @DisplayName: shut off  delay
+    // @Description: delay between when we shut off spraying.
+    // @Units: ms
+    // @Range: 0 5000
     // @User: Standard
     AP_GROUPINFO("SOFF_DLY",   6, AC_Sprayer, _shut_off_delay, AC_SPRAYER_DEFAULT_SHUT_OFF_DELAY),
 
@@ -79,6 +79,14 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("AREA",   8, AC_Sprayer, _area, AC_SPRAYER_DEFAULT_AREA),
 
+    // @Param: DRAIN_DLY
+    // @DisplayName: drain off delay
+    // @Description: pre time for drain off detect
+    // @Units: ms
+    // @Range: 0 5000
+    // @User: Standard
+    AP_GROUPINFO("DRAIN_DLY",   9, AC_Sprayer, _drain_off_delay, 2000),
+
     AP_GROUPEND
 };
 
@@ -89,6 +97,7 @@ AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsens
     _motors(motors),
     _speed_over_min_time(0),
     _speed_under_min_time(0),
+    _drain_off_pre_time(0),
     _spraying_last_time(0),
     _armed(false)
 
@@ -219,15 +228,29 @@ AC_Sprayer::update()
     if (_flags.spraying) {
         if ( flow == -1 && _flags.drain_off_precheck == true) {
             _flags.drain_off = true;
-            _flags.drain_off_precheck = false;           
+            _flags.drain_off_precheck = false;
+            _drain_off_pre_time = 0;           
         } else {
             _flags.drain_off = false;
-            _flags.drain_off_precheck = true;
+            if( _drain_off_pre_time == 0)
+                _drain_off_pre_time = now;
+            else {
+                if((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay)
+                {
+                    _flags.drain_off_precheck = true;
+                    _drain_off_pre_time = 0;
+                }
+            }
         }
+    }
+    else {
+        _drain_off_pre_time = 0;
+        _flags.drain_off = false;
+        _flags.drain_off_precheck = false;
     }
 
     // calculate spray area
-    if (_flags.spraying && flow != -1) {
+    if (_flags.spraying) {
         if (_spraying_last_time == 0) {
             _spraying_last_time = now;
         } else {

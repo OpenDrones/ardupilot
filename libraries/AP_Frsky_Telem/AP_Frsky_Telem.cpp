@@ -24,11 +24,13 @@
 extern const AP_HAL::HAL& hal;
 
 //constructor
-AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors) :
+AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors, AP_Mission &mission, AP_FlowSensor &flowsensor) :
     _ahrs(ahrs),
     _battery(battery),
     _sprayer(sprayer),
     _motors(motors),
+    _mission(mission),
+    _flowsensor(flowsensor),
     _port(NULL),
     _initialised_uart(false),
     _protocol(FrSkyUnknown),
@@ -39,6 +41,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _batt_remaining(0),
     _batt_volts(0),
     _batt_amps(0),
+    _spraying_flow(0),
     _spraying_area_mu(0),
     _sats_data_ready(false),
     _gps_sats(0),
@@ -46,6 +49,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _gps_data_ready(false),
     _pos_gps_ok(false),
     _course_in_degrees(0),
+    _mission_point_num(0),
     _lat_ns(0),
     _lon_ew(0),
     _latdddmm(0),
@@ -59,6 +63,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _baro_data_ready(false),
     _baro_alt_meters(0),
     _baro_alt_cm(0),
+	_sonar_alt_cm(0),
     _mode_data_ready(false),
     _mode(0),
     _armed_data_ready(false),
@@ -184,12 +189,12 @@ void AP_Frsky_Telem::send_hub_frame()
 
         calc_baro_alt();
         send_baro_alt_m();
-        send_baro_alt_cm();
+        //send_baro_alt_cm();   
     }
     // send frame2 every second
     if (now - _last_frame2_ms > 1000) {
         _last_frame2_ms = now;
-        send_heading();
+        send_mission_num();
         calc_gps_position();
         if (_pos_gps_ok) {
             send_gps_lat_dd();
@@ -245,7 +250,7 @@ void AP_Frsky_Telem::sport_tick(void)
                         send_batt_volts();
                         break;
                     case 1:
-                        send_current();
+                        send_spraying_flow();
                         break;
                     case 2:
                         send_spraying_area();
@@ -292,7 +297,7 @@ void AP_Frsky_Telem::sport_tick(void)
                         send_gps_alt_cm();
                         break;
                     case 10:
-                        send_heading();
+                        send_mission_num();
                         break;
                     case 11:
                         send_gps_hdop();
@@ -313,7 +318,7 @@ void AP_Frsky_Telem::sport_tick(void)
                         send_baro_alt_m();
                         break;
                     case 1:
-                        send_baro_alt_cm();
+                        send_sonar_alt_cm();
                         break;
                     }
                     _vario_call ++;
@@ -492,6 +497,16 @@ void AP_Frsky_Telem::calc_baro_alt()
     _baro_alt_cm = (baro_alt - abs(_baro_alt_meters)) * 100;
 }
 
+/*
+ * calc_sonar_alt : send sonar altitude in Meters based on sensor measurement
+ */
+void AP_Frsky_Telem::calc_sonar_alt(int16_t sonar_alt)
+{
+    // _sonar_alt_cm: 
+    _sonar_alt_cm = sonar_alt;
+}
+
+
 /**
  * Formats the decimal latitude/longitude to the required degrees/minutes.
  */
@@ -508,6 +523,7 @@ float  AP_Frsky_Telem::frsky_format_gps(float dec)
 void AP_Frsky_Telem::calc_gps_position()
 {
     _course_in_degrees = (_ahrs.yaw_sensor / 100) % 360;
+    _mission_point_num = _mission.num_commands();
 
     const AP_GPS &gps = _ahrs.get_gps();
     float lat;
@@ -561,6 +577,12 @@ void AP_Frsky_Telem::calc_battery()
     _batt_volts = roundf(_battery.voltage() * 10.0f);
     _batt_amps = roundf(_battery.current_amps() * 10.0f);
     _spraying_area_mu = roundf(_sprayer.get_spray_area());
+    if(_flowsensor.get_flow(0) == -1) {
+        _spraying_flow = 0;   
+    } else {
+        _spraying_flow = roundf(_flowsensor.get_flow(0) * 10.0f);
+    }
+
 }
 
 /*
@@ -608,9 +630,9 @@ void AP_Frsky_Telem::send_baro_alt_m(void)
 /*
  * send barometer altitude decimal part
  */
-void AP_Frsky_Telem::send_baro_alt_cm(void)
+void AP_Frsky_Telem::send_sonar_alt_cm(void)
 {
-    frsky_send_data(FRSKY_ID_BARO_ALT_AP, _baro_alt_cm);
+    frsky_send_data(FRSKY_ID_ACCEL_Z, _sonar_alt_cm);
 }
 
 /*
@@ -634,7 +656,15 @@ void AP_Frsky_Telem::send_batt_volts(void)
  */
 void AP_Frsky_Telem::send_current(void)
 {
-    frsky_send_data(FRSKY_ID_CURRENT, _batt_amps);
+    //frsky_send_data(FRSKY_ID_CURRENT, _batt_amps);
+}
+
+/*
+ * send spraying flow 
+ */
+void AP_Frsky_Telem::send_spraying_flow(void)
+{
+    frsky_send_data(FRSKY_ID_CURRENT, _spraying_flow);
 }
 
 /*
@@ -648,9 +678,9 @@ void AP_Frsky_Telem::send_spraying_area(void)
 /*
  * send heading in degree based on AHRS and not GPS 
  */
-void AP_Frsky_Telem::send_heading(void)
+void AP_Frsky_Telem::send_mission_num(void)
 {
-    frsky_send_data(FRSKY_ID_GPS_COURS_BP, _course_in_degrees);
+    frsky_send_data(FRSKY_ID_GPS_COURS_BP, _mission_point_num);
 }
 
 /*
