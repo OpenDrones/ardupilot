@@ -229,7 +229,6 @@ void Copter::init_aux_switch_function(int8_t ch_option, uint8_t ch_flag)
     // init channel options
     switch(ch_option) {
         case AUXSW_SIMPLE_MODE:
-        case AUXSW_SONAR:
         case AUXSW_FENCE:
         case AUXSW_RESETTOARMEDYAW:
         case AUXSW_SUPERSIMPLE_MODE:

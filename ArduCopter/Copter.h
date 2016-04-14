@@ -177,6 +177,7 @@ private:
     RangeFinder sonar{serial_manager};
     bool sonar_enabled; // enable user switch for sonar
     bool flag_reset_target_sonar_alt;
+    butter10hz1_6 sonar_filter;
 #endif
 
 #if WPCRUISE_ENABLED == ENABLED
@@ -380,7 +381,7 @@ private:
     // Altitude
     // The cm/s we are moving up or down based on filtered data - Positive = UP
     int16_t climb_rate;
-    // The altitude as reported by Sonar in cm - Values are 20 to 700 generally.
+    // The altitude as reported by Sonar in cm, filter processed - Values are 20 to 700 generally.
     int16_t sonar_alt;
     uint8_t sonar_alt_health;    // true if we can trust the altitude from the sonar
     float target_sonar_alt;      // desired altitude in cm above the ground

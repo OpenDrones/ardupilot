@@ -233,7 +233,8 @@ enum FlipState {
 enum Wpcruisestate {
     Return_Bp_Loiter,
     Return_Bp_Wp_Nav,
-    Waypoint_Nav  
+    Waypoint_Nav,
+	Wpcruise_loiter  
 };
 
 // LAND state

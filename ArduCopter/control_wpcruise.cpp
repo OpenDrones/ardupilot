@@ -117,6 +117,8 @@ void Copter::wpcruise_run()
                 } else {
                     // run loiter controller
                     wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+                    // update altitude target and call position controller
+                    pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
 
                     // call attitude controller
                     attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
@@ -125,9 +127,6 @@ void Copter::wpcruise_run()
                     return;
                 }
             }
-
-            // set flying state to loiter and disable sprayer when flow break
-            // set current stopping position as destination and loiter
 
             // calc destination position step by step
             if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old)))
@@ -143,7 +142,6 @@ void Copter::wpcruise_run()
                     // calculate break point position
                     calc_breakpoint_destination(destination);
                     WpCruise_state = Waypoint_Nav;
-                    // enable sprayer
                     break;
                     // update waypoint nav destination
                     case Waypoint_Nav:
@@ -152,22 +150,38 @@ void Copter::wpcruise_run()
                         mission.truncate(3);
                     }
                     update_waypoint_destination(destination);
+                    // enable sprayer
+                    sprayer.enable(true);
+                    break;
+                    default:
+                    // do nothing
                     break;
                 }
-                // set destination
-                if (g.sonar_alt_wp != 0 && sonar_enabled) {
-                    wp_nav.set_wp_xy_origin_and_destination(destination);
-                    target_sonar_alt = destination.z;
-                }
-                else {
-                    wp_nav.set_wp_destination(destination);
+                if (WpCruise_state != Wpcruise_loiter) {
+                    // set destination
+                    if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                        wp_nav.set_wp_xy_origin_and_destination(destination);
+                        target_sonar_alt = destination.z;
+                    }
+                    else {
+                        wp_nav.set_wp_destination(destination);
+                    }
                 }
 
                 wpcruise.flag_init_destination = false;
             }
 
             wpcruise.flag_reach_destination_old = wp_nav.reached_wp_destination();
-        
+            // loiter and disable sprayer when flow break
+            if ((WpCruise_state == Waypoint_Nav) && (sprayer.get_drain_off() || failsafe.battery))
+            //if ((WpCruise_state == Waypoint_Nav) && failsafe.battery)
+            {
+                // save current waypoint position and disable sprayer
+                save_add_waypoint();
+                sprayer.enable(false);
+                // set wpcruise state
+                WpCruise_state = Wpcruise_loiter;
+            }
         // run waypoint controller
         if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
             wp_nav.update_wpnav();

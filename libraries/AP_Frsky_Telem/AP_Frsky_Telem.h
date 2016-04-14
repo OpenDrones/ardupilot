@@ -26,6 +26,8 @@
 #include <AP_BattMonitor/AP_BattMonitor.h>
 #include <AC_Sprayer/AC_Sprayer.h>
 #include <AP_Motors/AP_Motors.h>
+#include <AP_Mission/AP_Mission.h>
+#include <AP_FlowSensor/AP_FlowSensor.h>
 #include <AP_SerialManager/AP_SerialManager.h>
 
 /* FrSky sensor hub data IDs */
@@ -80,7 +82,7 @@ class AP_Frsky_Telem
 {
 public:
     //constructor
-    AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors);
+    AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Sprayer &sprayer, AP_Motors &motors, AP_Mission &mission, AP_FlowSensor &flowsensor);
 
     // supported protocols
     enum FrSkyProtocol {
@@ -96,6 +98,8 @@ public:
     //  should be called by main program at 50hz to allow poll for serial bytes
     //  coming from the receiver for the SPort protocol
     void send_frames(uint8_t control_mode);
+
+    void calc_sonar_alt(int16_t sonar_alt);
 
 private:
 
@@ -119,6 +123,7 @@ private:
 
     // methods to convert flight controller data to frsky telemetry format
     void calc_baro_alt();
+    //void calc_sonar_alt();
     float frsky_format_gps(float dec);
     void calc_gps_position();
     void calc_battery();
@@ -129,13 +134,14 @@ private:
     void send_mode(void);
     void send_armed_stat(void);
     void send_baro_alt_m(void);
-    void send_baro_alt_cm(void);
+    void send_sonar_alt_cm(void);
     void send_batt_remain(void);
     void send_batt_volts(void);
     void send_current(void);
+    void send_spraying_flow(void);
     void send_spraying_area(void);
     void send_prearm_error(void);
-    void send_heading(void);
+    void send_mission_num(void);
     void send_gps_hdop(void);
     void send_gps_lat_dd(void);
     void send_gps_lat_mm(void);
@@ -152,6 +158,8 @@ private:
     AP_BattMonitor &_battery;               // reference to battery monitor object
     AC_Sprayer &_sprayer;                   // reference to sprayer object
     AP_Motors &_motors;                     // reference to motors object
+    AP_Mission &_mission;                   // reference to mission object
+    AP_FlowSensor &_flowsensor;             // reference to flowsensor object
     AP_HAL::UARTDriver *_port;              // UART used to send data to receiver
     bool _initialised_uart;                 // true when we have detected the protocol and UART has been initialised
     enum FrSkyProtocol _protocol;           // protocol used - detected using SerialManager's SERIALX_PROTOCOL parameter
@@ -165,6 +173,7 @@ private:
     uint16_t _batt_volts;
     uint16_t _batt_amps;
 
+    uint16_t _spraying_flow;
     uint16_t _spraying_area_mu;
 
     bool _sats_data_ready;
@@ -174,6 +183,7 @@ private:
     bool _gps_data_ready;
     bool _pos_gps_ok;
     uint16_t _course_in_degrees;
+    uint16_t _mission_point_num;
     char _lat_ns, _lon_ew;
     uint16_t _latdddmm;
     uint16_t _latmmmm;
@@ -187,6 +197,8 @@ private:
     bool _baro_data_ready;
     int16_t _baro_alt_meters;
     uint16_t _baro_alt_cm;
+
+    uint16_t _sonar_alt_cm;
 
     bool _mode_data_ready;
     uint8_t _mode; 
