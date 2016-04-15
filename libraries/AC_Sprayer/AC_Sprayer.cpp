@@ -235,10 +235,14 @@ AC_Sprayer::update()
             if( _drain_off_pre_time == 0)
                 _drain_off_pre_time = now;
             else {
-                if((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay)
-                {
-                    _flags.drain_off_precheck = true;
-                    _drain_off_pre_time = 0;
+                if((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay) {
+                        _flags.drain_off_precheck = true;
+                        _drain_off_pre_time = 0;   
+                }
+                else {
+                    if( flow == -1) {
+                        _drain_off_pre_time = now;                       
+                    }
                 }
             }
         }
