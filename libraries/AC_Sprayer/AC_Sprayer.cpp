@@ -271,9 +271,9 @@ AC_Sprayer::update()
         vel_fwd_abs = 100.0f;
     }
 
-    // if spraying or testing update the pump rate percent, for radio direct pwm control（50Hz）, 100% duty -> 20000us
+    // if spraying or testing update the pump rate percent, for radio direct pwm control（200Hz）, 100% duty -> 5000us
     if (_flags.spraying || _flags.testing) {        
-        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min(max(2 * vel_fwd_abs * _pump_pct_1ms, 100 *_pump_min_pct),20000));
+        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min(max(0.5 * vel_fwd_abs * _pump_pct_1ms, 50*_pump_min_pct),5000));
         RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
     }else{
         // ensure sprayer and spinner are off
