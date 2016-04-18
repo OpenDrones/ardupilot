@@ -1177,3 +1177,40 @@ AP_GPS_UBLOX::_configure_rate(void)
     msg.timeref         = 0;     // UTC time
     _send_message(CLASS_CFG, MSG_CFG_RATE, &msg, sizeof(msg));
 }
+
+void
+AP_GPS_UBLOX::inject_data(uint8_t *data, uint8_t len)
+{
+    if (port->txspace() > len) {
+        port->write(data, len);
+    } else {
+        Debug("UBX: Not enough TXSPACE");
+    }
+}
+
+
+static const char *reasons[] = {"navigation rate",
+                                "posllh rate",
+                                "status rate",
+                                "solution rate",
+                                "velned rate",
+                                "dop rate",
+                                "hw monitor rate",
+                                "hw2 monitor rate",
+                                "raw rate",
+                                "version",
+                                "navigation settings",
+                                "GNSS settings",
+                                "SBAS settings"};
+
+
+void
+AP_GPS_UBLOX::broadcast_configuration_failure_reason(void) const {
+    for (uint8_t i = 0; i < ARRAY_SIZE(reasons); i++) {
+        if (_unconfigured_messages & (1 << i)) {
+            GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_INFO, "GPS %d: u-blox %s configuration 0x%02x",
+                state.instance +1, reasons[i], _unconfigured_messages);
+            break;
+        }
+    }
+}

@@ -3,9 +3,7 @@
 /// @file	RC_Channel_aux.h
 /// @brief	RC_Channel manager for auxiliary channels (5..8), with EEPROM-backed storage of constants.
 /// @author Amilcar Lucas
-
-#ifndef __RC_CHANNEL_AUX_H__
-#define __RC_CHANNEL_AUX_H__
+#pragma once
 
 #include <AP_HAL/AP_HAL.h>
 #include "RC_Channel.h"
@@ -76,6 +74,14 @@ public:
         k_motor6                = 38,
         k_motor7                = 39,
         k_motor8                = 40,
+        k_rcin1                 = 51,            ///< these are for pass-thru from arbitrary rc inputs
+        k_rcin2                 = 52,
+        k_rcin3                 = 53,
+        k_rcin4                 = 54,
+        k_rcin5                 = 55,
+        k_rcin6                 = 56,
+        k_rcin7                 = 57,
+        k_rcin8                 = 58,
         k_nr_aux_servo_functions         ///< This must be the last enum value (only add new values _before_ this one)
     } Aux_servo_function_t;
 
@@ -151,5 +157,3 @@ private:
 
     void aux_servo_function_setup(void);
 };
-
-#endif /* RC_CHANNEL_AUX_H_ */

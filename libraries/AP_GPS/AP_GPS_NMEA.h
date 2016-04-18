@@ -42,12 +42,10 @@
 /// qualifier field (this is common with e.g. older SiRF units) it is
 /// not considered a source of fix-valid information.
 ///
-
-
-#ifndef __AP_GPS_NMEA_H__
-#define __AP_GPS_NMEA_H__
+#pragma once
 
 #include "AP_GPS.h"
+#include "GPS_Backend.h"
 
 /// NMEA parser
 ///
@@ -162,5 +160,3 @@ private:
 
     static const char _initialisation_blob[];
 };
-
-#endif // __AP_GPS_NMEA_H__

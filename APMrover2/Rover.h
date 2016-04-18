@@ -16,14 +16,12 @@
 /* 
    main Rover class, containing all vehicle specific state
 */
+#pragma once
 
-#ifndef _ROVER_H_
-#define _ROVER_H_
+#define THISFIRMWARE "ArduRover v3.0.0"
+#define FIRMWARE_VERSION 3,0,0,FIRMWARE_VERSION_TYPE_OFFICIAL
 
-#define THISFIRMWARE "ArduRover v2.51-beta"
-#define FIRMWARE_VERSION 2,51,0,FIRMWARE_VERSION_TYPE_BETA
-
-#include <math.h>
+#include <cmath>
 #include <stdarg.h>
 
 // Libraries
@@ -154,7 +152,7 @@ private:
 #endif
 
     // Arming/Disarming mangement class
-    AP_Arming arming {ahrs, barometer, compass, home_is_set};
+    AP_Arming arming {ahrs, barometer, compass, battery, home_is_set};
 
     AP_L1_Control L1_controller;
 
@@ -564,5 +562,3 @@ extern Rover rover;
 
 using AP_HAL::millis;
 using AP_HAL::micros;
-
-#endif // _ROVER_H_

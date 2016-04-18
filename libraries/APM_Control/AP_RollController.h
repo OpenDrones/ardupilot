@@ -1,7 +1,5 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-
-#ifndef __AP_ROLL_CONTROLLER_H__
-#define __AP_ROLL_CONTROLLER_H__
+#pragma once
 
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_Common/AP_Common.h>
@@ -32,6 +30,13 @@ public:
 
 	static const struct AP_Param::GroupInfo var_info[];
 
+
+    // tuning accessors
+    void kP(float v) { gains.P.set(v); }
+    void kI(float v) { gains.I.set(v); }
+    void kD(float v) { gains.D.set(v); }
+    void kFF(float v) { gains.FF.set(v); }
+    
 private:
 	const AP_Vehicle::FixedWing &aparm;
     AP_AutoTune::ATGains gains;
@@ -46,5 +51,3 @@ private:
 	AP_AHRS &_ahrs;
 
 };
-
-#endif // __AP_ROLL_CONTROLLER_H__

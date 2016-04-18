@@ -1,10 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#pragma once
 
-#ifndef _PLANE_H
-#define _PLANE_H
-
-#define THISFIRMWARE "ArduPlane V3.5.0"
-#define FIRMWARE_VERSION 3,5,0,FIRMWARE_VERSION_TYPE_OFFICIAL
+#define THISFIRMWARE "ArduPlane V3.5.2"
+#define FIRMWARE_VERSION 3,5,2,FIRMWARE_VERSION_TYPE_OFFICIAL
 
 /*
    Lead developer: Andrew Tridgell
@@ -32,7 +30,7 @@
 // Header includes
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <math.h>
+#include <cmath>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -97,6 +95,7 @@
 #include <AP_ADSB/AP_ADSB.h>
 
 #include "quadplane.h"
+#include "tuning.h"
 
 // Configuration
 #include "config.h"
@@ -117,8 +116,8 @@ class AP_Arming_Plane : public AP_Arming
 {
 public:
     AP_Arming_Plane(const AP_AHRS &ahrs_ref, const AP_Baro &baro, Compass &compass,
-                    const enum HomeState &home_set) :
-        AP_Arming(ahrs_ref, baro, compass, home_set) {
+                    const AP_BattMonitor &battery, const enum HomeState &home_set) :
+        AP_Arming(ahrs_ref, baro, compass, battery, home_set) {
             AP_Param::setup_object_defaults(this, var_info);
     }
     bool pre_arm_checks(bool report);
@@ -138,6 +137,7 @@ public:
     friend class Parameters;
     friend class AP_Arming_Plane;
     friend class QuadPlane;
+    friend class Tuning;
 
     Plane(void);
 
@@ -204,6 +204,7 @@ private:
         float initial_correction;
         uint32_t last_correction_time_ms;
         uint8_t in_range_count;
+        float height_estimate;
     } rangefinder_state;
 #endif
 
@@ -516,6 +517,9 @@ private:
         // debounce timer
         uint32_t debounce_timer_ms;
 
+        // delay time for debounce to count to
+        uint32_t debounce_time_total_ms;
+
         // length of time impact_detected has been true. Times out after a few seconds. Used to clip isFlyingProbability
         uint32_t impact_timer_ms;
     } crash_state;
@@ -706,7 +710,7 @@ private:
 #endif
 
     // Arming/Disarming mangement class
-    AP_Arming_Plane arming {ahrs, barometer, compass, home_is_set };
+    AP_Arming_Plane arming {ahrs, barometer, compass, battery, home_is_set };
 
     AP_Param param_loader {var_info};
 
@@ -727,6 +731,11 @@ private:
     // support for quadcopter-plane
     QuadPlane quadplane{ahrs};
 
+    // support for transmitter tuning
+    Tuning tuning;
+
+    static const struct LogStructure log_structure[];
+    
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     // the crc of the last created PX4Mixer
     int32_t last_mixer_crc = -1;
@@ -1066,5 +1075,3 @@ extern Plane plane;
 
 using AP_HAL::millis;
 using AP_HAL::micros;
-
-#endif // _PLANE_H_

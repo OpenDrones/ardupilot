@@ -41,6 +41,13 @@ const AP_Param::GroupInfo AP_Notify::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("LED_BRIGHT", 0, AP_Notify, _rgb_led_brightness, RGB_LED_HIGH),
 
+    // @Param: BUZZ_ENABLE
+    // @DisplayName: Buzzer enable
+    // @Description: Enable or disable the buzzer. Only for Linux and PX4 based boards.
+    // @Values: 0:Disable,1:Enable
+    // @User: Advanced
+    AP_GROUPINFO("BUZZ_ENABLE", 1, AP_Notify, _buzzer_enable, BUZZER_ON),
+
     AP_GROUPEND
 };
 
@@ -91,7 +98,8 @@ struct AP_Notify::notify_events_type AP_Notify::events;
         ToneAlarm_Linux tonealarm;
         NotifyDevice *AP_Notify::_devices[] = {&toshibaled, &tonealarm};
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_MINLURE
-        NotifyDevice *AP_Notify::_devices[0];
+        RCOutputRGBLedOff led(15, 13, 14, 255);
+        NotifyDevice *AP_Notify::_devices[] = { &led };
     #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLEBRAIN2 || \
       CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXFMINI
         AP_BoardLED boardled;

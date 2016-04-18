@@ -1,5 +1,4 @@
-#ifndef _LOGSTRUCTURE_H
-#define _LOGSTRUCTURE_H
+#pragma once
 
 /*
   unfortunately these need to be macros because of a limitation of
@@ -446,6 +445,7 @@ struct PACKED log_Mode {
     uint64_t time_us;
     uint8_t mode;
     uint8_t mode_num;
+    uint8_t mode_reason;
 };
 
 /*
@@ -627,6 +627,23 @@ struct PACKED log_RPM {
     float rpm2;
 };
 
+struct PACKED log_Rate {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float   control_roll;
+    float   roll;
+    float   roll_out;
+    float   control_pitch;
+    float   pitch;
+    float   pitch_out;
+    float   control_yaw;
+    float   yaw;
+    float   yaw_out;
+    float   control_accel;
+    float   accel;
+    float   accel_out;
+};
+
 // #if SBP_HW_LOGGING
 
 struct PACKED log_SbpLLH {
@@ -734,7 +751,7 @@ Format characters in the format string for binary log messages
     { LOG_COMPASS_MSG, sizeof(log_Compass), \
       "MAG", "QhhhhhhhhhB",    "TimeUS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ,Health" }, \
     { LOG_MODE_MSG, sizeof(log_Mode), \
-      "MODE", "QMB",         "TimeUS,Mode,ModeNum" }, \
+      "MODE", "QMBB",         "TimeUS,Mode,ModeNum,Rsn" }, \
     { LOG_RFND_MSG, sizeof(log_RFND), \
       "RFND", "QCC",         "TimeUS,Dist1,Dist2" }, \
     { LOG_DF_MAV_STATS, sizeof(log_DF_MAV_Stats), \
@@ -861,7 +878,9 @@ Format characters in the format string for binary log messages
     { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
       "GMB2", "IBfffffffff", "TimeMS,es,ex,ey,ez,rx,ry,rz,tx,ty,tz" }, \
     { LOG_GIMBAL3_MSG, sizeof(log_Gimbal3), \
-      "GMB3", "Ihhh", "TimeMS,rl_torque_cmd,el_torque_cmd,az_torque_cmd" }
+      "GMB3", "Ihhh", "TimeMS,rl_torque_cmd,el_torque_cmd,az_torque_cmd" }, \
+    { LOG_RATE_MSG, sizeof(log_Rate), \
+      "RATE", "Qffffffffffff",  "TimeUS,RDes,R,ROut,PDes,P,POut,YDes,Y,YOut,ADes,A,AOut" }
 
 // #if SBP_HW_LOGGING
 #define LOG_SBP_STRUCTURES \
@@ -974,14 +993,10 @@ enum LogMessages {
     LOG_GIMBAL1_MSG,
     LOG_GIMBAL2_MSG,
     LOG_GIMBAL3_MSG,
-
-// message types 211 to 220 reversed for autotune use
-
+    LOG_RATE_MSG,
 };
 
 enum LogOriginType {
     ekf_origin = 0,
     ahrs_home = 1
 };
-
-#endif

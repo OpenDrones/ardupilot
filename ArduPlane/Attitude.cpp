@@ -143,6 +143,7 @@ void Plane::stabilize_stick_mixing_direct()
         control_mode == QSTABILIZE ||
         control_mode == QHOVER ||
         control_mode == QLOITER ||
+        control_mode == QLAND ||
         control_mode == TRAINING) {
         return;
     }
@@ -165,8 +166,9 @@ void Plane::stabilize_stick_mixing_fbw()
         control_mode == QSTABILIZE ||
         control_mode == QHOVER ||
         control_mode == QLOITER ||
+        control_mode == QLAND ||
         control_mode == TRAINING ||
-        (control_mode == AUTO && g.auto_fbw_steer)) {
+        (control_mode == AUTO && g.auto_fbw_steer == 42)) {
         return;
     }
     // do FBW style stick mixing. We don't treat it linearly
@@ -364,7 +366,8 @@ void Plane::stabilize()
         stabilize_acro(speed_scaler);
     } else if (control_mode == QSTABILIZE ||
                control_mode == QHOVER ||
-               control_mode == QLOITER) {
+               control_mode == QLOITER ||
+               control_mode == QLAND) {
         quadplane.control_run();
     } else {
         if (g.stick_mixing == STICK_MIXING_FBW && control_mode != STABILIZE) {
@@ -591,7 +594,7 @@ bool Plane::suppress_throttle(void)
         return false;
     }
 
-    if (control_mode==AUTO && g.auto_fbw_steer) {
+    if (control_mode==AUTO && g.auto_fbw_steer == 42) {
         // user has throttle control
         return false;
     }
@@ -994,10 +997,7 @@ void Plane::set_servos(void)
                    guided_throttle_passthru) {
             // manual pass through of throttle while in GUIDED
             channel_throttle->radio_out = channel_throttle->radio_in;
-        } else if (control_mode == QSTABILIZE ||
-                   control_mode == QHOVER ||
-                   control_mode == QLOITER ||
-                   quadplane.in_vtol_auto()) {
+        } else if (quadplane.in_vtol_mode()) {
             // no forward throttle for now
             channel_throttle->servo_out = 0;
             channel_throttle->calc_pwm();
