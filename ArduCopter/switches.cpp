@@ -706,7 +706,7 @@ void Copter::save_add_waypoint()
 
         // add or replace command
         if(mission.num_commands() == 4) {
-            mission.replace_cmd(mission.num_commands(),cmd);
+            mission.replace_cmd(3,cmd);
             // log event
             Log_Write_Event(DATA_SAVEWP_ADD_WP);
 
