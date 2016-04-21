@@ -69,7 +69,6 @@ void Copter::wpcruise_run()
 
     // process pilot inputs
     if (!failsafe.radio) {
-
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
 
@@ -173,40 +172,49 @@ void Copter::wpcruise_run()
 
             wpcruise.flag_reach_destination_old = wp_nav.reached_wp_destination();
             // loiter and disable sprayer when flow break
-            if ((WpCruise_state == Waypoint_Nav) && (sprayer.get_drain_off() || failsafe.battery))
-            //if ((WpCruise_state == Waypoint_Nav) && failsafe.battery)
+            if (WpCruise_state != Wpcruise_loiter && (sprayer.get_drain_off() || failsafe.battery))
             {
-                // save current waypoint position and disable sprayer
-                save_add_waypoint();
-                sprayer.enable(false);
+                if (WpCruise_state == Waypoint_Nav)
+                {
+                    // save current waypoint position and disable sprayer
+                    save_add_waypoint();
+                    sprayer.enable(false);
+                }
                 // set wpcruise state
                 WpCruise_state = Wpcruise_loiter;
+                // calc stopping point as destination
+                Vector3f destination;
+                pos_control.get_stopping_point_xy(destination);
+                pos_control.get_stopping_point_z(destination);
+                
+                // set destination
+                if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                    wp_nav.set_wp_xy_origin_and_destination(destination);
+                } else {
+                        wp_nav.set_wp_destination(destination);
+                    }
             }
-        // run waypoint controller
-        if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
-            wp_nav.update_wpnav();
-        } else {
-            wp_nav.update_wpnav_xy();
+            // run waypoint controller
+            if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
+                wp_nav.update_wpnav();
+            } else {
+                wp_nav.update_wpnav_xy();
 
-            // calculate target sonar altitude
-            // target_sonar_alt = wp_nav.calc_curr_target_z();
-
-            // altitude control according to sonar
-            if (sonar_enabled) {
-                // if sonar is ok, use surface tracking
-                target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+                // altitude control according to sonar
+                if (sonar_enabled) {
+                    // if sonar is ok, use surface tracking
+                    target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+                }
+                // update altitude target and call position controller
+                pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
             }
     
-            // update altitude target and call position controller
-            pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+            // call z-axis position controller
+            pos_control.update_z_controller();
+
+            // roll & pitch from waypoint controller, yaw rate from pilot
+            attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
         }
-    
-        // call z-axis position controller
-        pos_control.update_z_controller();
-
-        // roll & pitch from waypoint controller, yaw rate from pilot
-        attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
-    }
 }
 // initilate first destination position during auto cruise
 void Copter::calc_breakpoint_destination(Vector3f& destination)

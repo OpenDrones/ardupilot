@@ -634,9 +634,6 @@
 #ifndef CRUISE_ENABLED
  # define CRUISE_ENABLED               ENABLED // Cruise flight mode enabled by default
 #endif
-#ifndef CRUISE_SPEED_DEFAULT
- # define CRUISE_SPEED_DEFAULT   200    // default CRUISE_SPEED param value.  Max lean angle during braking in centi-degrees
-#endif
 
 // Autocruise flight mode
 #ifndef WPCRUISE_ENABLED

@@ -9,10 +9,7 @@
 #define PILOT_ROLL_PITCH_THRESHOLD      300.0f   // threshold pilot pitch or roll to recalculate initial cruise velocity
 
 static struct {
-    // cruise PID controller
-    uint8_t cruise_reset_I;                   // true the very first time to run cruise PID controller
-
-    // cruise desired forward and right velocity without pilot input
+     // cruise desired forward and right velocity without pilot input
     float vel_fwd;
     float vel_rgt;
 
@@ -45,8 +42,6 @@ bool Copter::cruise_init(bool ignore_checks)
         pos_control.init_xy_controller();
 
         init_cruise_vel(cruise.vel_fwd, cruise.vel_rgt);
-
-
         return true;
     }else{
         return false;
@@ -115,6 +110,13 @@ void Copter::cruise_run()
         // convert pilot input to lean angles
         get_pilot_desired_lean_angles(channel_roll->control_in, channel_pitch->control_in, target_roll, target_pitch);
             
+        // calc target cruise speed without pilot input
+        if (cruise.vel_fwd > 0)
+        {
+            cruise.vel_fwd = wp_nav.get_speed_xy();
+        } else {
+            cruise.vel_fwd = -wp_nav.get_speed_xy();
+        }
         // calc target cruise velocity in body-frame according to pilot input roll and pitch
         get_pilot_cruise_vel(cruise.target_vel_fwd, cruise.vel_fwd, -target_pitch);
         get_pilot_cruise_vel(cruise.target_vel_rgt, cruise.vel_rgt, target_roll);
@@ -170,20 +172,17 @@ void Copter::init_cruise_vel(float &cruise_vel_fwd, float &cruise_vel_rgt)
     vel_fwd = curr_vel.x*ahrs.cos_yaw() + curr_vel.y*ahrs.sin_yaw();
     vel_rgt = -curr_vel.x*ahrs.sin_yaw() + curr_vel.y*ahrs.cos_yaw();
     
-    // if unreasonable cruise parameter or copter fly to right or left in body-frame now, make cruise velocity equals to 0, to confirm only fly forward and back in cruise
-
-    if (g.cruise_speed < 0 || g.cruise_speed > 1000 || fabsf(vel_rgt) > CRUISE_CURR_SPEED_MIN_DEFAULT) {
+    // if copter are flying to right or left in body-frame now, make cruise velocity equals to 0, to confirm only fly forward and back in cruise
+    if (fabsf(vel_rgt) > CRUISE_CURR_SPEED_MIN_DEFAULT) {
         cruise_vel_fwd = 0;
         cruise_vel_rgt = 0;
         return;
     }
-
         if (vel_fwd < -CRUISE_CURR_SPEED_MIN_DEFAULT) {
-            cruise_vel_fwd = -g.cruise_speed;
+            cruise_vel_fwd = -wp_nav.get_speed_xy();
         } else {
-            cruise_vel_fwd = g.cruise_speed;
+            cruise_vel_fwd = wp_nav.get_speed_xy();
         }
-
     cruise_vel_rgt = 0;
 }
 
