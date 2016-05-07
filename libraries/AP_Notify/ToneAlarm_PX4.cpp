@@ -241,6 +241,15 @@ void ToneAlarm_PX4::update()
         }
     }
 
+    // check if ekf status has changed
+    if (flags.failsafe_ekf != AP_Notify::flags.ekf_bad) {
+        flags.failsafe_ekf = AP_Notify::flags.ekf_bad;
+        if (flags.failsafe_ekf) {
+            // ekf warning tune
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS);
+        }
+    }
+
 }
 
 #endif // CONFIG_HAL_BOARD == HAL_BOARD_PX4

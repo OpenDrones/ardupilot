@@ -55,6 +55,7 @@ private:
         uint8_t pre_arm_check         : 1;    // 0 = failing checks, 1 = passed
         uint8_t failsafe_radio        : 1;    // 1 if radio failsafe
         uint8_t vehicle_lost          : 1;    // 1 if lost copter tone requested
+        uint8_t failsafe_ekf          : 1;    // 1 if ekf bad
     } flags;
 
     int8_t _cont_tone_playing;
