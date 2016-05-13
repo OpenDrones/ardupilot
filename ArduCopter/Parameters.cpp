@@ -506,16 +506,6 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     GSCALAR(poshold_brake_angle_max, "PHLD_BRAKE_ANGLE",  POSHOLD_BRAKE_ANGLE_DEFAULT),
 #endif
 
-#if CRUISE_ENABLED == ENABLED
-    // @Param: CRUISE_SPEED
-    // @DisplayName: cruise speed
-    // @Description: 
-    // @Units: 
-    // @Range: 
-    // @User: Advanced
-    GSCALAR(cruise_speed, "CRUISE_SPEED",  CRUISE_SPEED_DEFAULT),
-#endif
-
     // @Param: LAND_REPOSITION
     // @DisplayName: Land repositioning
     // @Description: Enables user input during LAND mode, the landing phase of RTL, and auto mode landings.
