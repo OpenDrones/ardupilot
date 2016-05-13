@@ -1,6 +1,7 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #include "Copter.h"
+#include "version.h"
 
 #if LOGGING_ENABLED == ENABLED
 
@@ -306,6 +307,7 @@ struct PACKED log_Control_Tuning {
     int32_t  baro_alt;
     int16_t  desired_sonar_alt;
     int16_t  sonar_alt;
+    float    terr_alt;
     int16_t  desired_climb_rate;
     int16_t  climb_rate;
 };
@@ -313,6 +315,12 @@ struct PACKED log_Control_Tuning {
 // Write a control tuning packet
 void Copter::Log_Write_Control_Tuning()
 {
+    // get terrain altitude
+    float terr_alt = 0.0f;
+#if AP_TERRAIN_AVAILABLE && AC_TERRAIN
+    terrain.height_above_terrain(terr_alt, true);
+#endif
+
     struct log_Control_Tuning pkt = {
         LOG_PACKET_HEADER_INIT(LOG_CONTROL_TUNING_MSG),
         time_us             : AP_HAL::micros64(),
@@ -324,6 +332,7 @@ void Copter::Log_Write_Control_Tuning()
         baro_alt            : baro_alt,
         desired_sonar_alt   : (int16_t)target_sonar_alt,
         sonar_alt           : sonar_alt,
+        terr_alt            : terr_alt,
         desired_climb_rate  : (int16_t)pos_control.get_vel_target_z(),
         climb_rate          : climb_rate
     };
@@ -339,6 +348,7 @@ struct PACKED log_Performance {
     int16_t  pm_test;
     uint8_t i2c_lockup_count;
     uint16_t ins_error_count;
+    uint32_t log_dropped;
 };
 
 // Write a performance monitoring packet
@@ -352,16 +362,17 @@ void Copter::Log_Write_Performance()
         max_time         : perf_info_get_max_time(),
         pm_test          : pmTest1,
         i2c_lockup_count : hal.i2c->lockup_count(),
-        ins_error_count  : ins.error_count()
+        ins_error_count  : ins.error_count(),
+        log_dropped      : DataFlash.num_dropped() - perf_info_get_num_dropped(),
     };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+    DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
 }
 
 // Write an attitude packet
 void Copter::Log_Write_Attitude()
 {
     Vector3f targets = attitude_control.get_att_target_euler_cd();
-    targets.z = wrap_360_cd_float(targets.z);
+    targets.z = wrap_360_cd(targets.z);
     DataFlash.Log_Write_Attitude(ahrs, targets);
 
  #if OPTFLOW == ENABLED
@@ -401,21 +412,6 @@ void Copter::Log_Write_MotBatt()
 #endif
 }
 
-struct PACKED log_Startup {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-};
-
-// Write Startup packet
-void Copter::Log_Write_Startup()
-{
-    struct log_Startup pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_STARTUP_MSG),
-        time_us         : AP_HAL::micros64()
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-
 struct PACKED log_Event {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -453,7 +449,7 @@ void Copter::Log_Write_Data(uint8_t id, int16_t value)
             id          : id,
             data_value  : value
         };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
+        DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
     }
 }
 
@@ -475,7 +471,7 @@ void Copter::Log_Write_Data(uint8_t id, uint16_t value)
             id          : id,
             data_value  : value
         };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
+        DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
     }
 }
 
@@ -496,7 +492,7 @@ void Copter::Log_Write_Data(uint8_t id, int32_t value)
             id          : id,
             data_value  : value
         };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
+        DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
     }
 }
 
@@ -517,7 +513,7 @@ void Copter::Log_Write_Data(uint8_t id, uint32_t value)
             id          : id,
             data_value  : value
         };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
+        DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
     }
 }
 
@@ -539,7 +535,7 @@ void Copter::Log_Write_Data(uint8_t id, float value)
             id          : id,
             data_value  : value
         };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
+        DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
     }
 }
 
@@ -559,12 +555,14 @@ void Copter::Log_Write_Error(uint8_t sub_system, uint8_t error_code)
         sub_system    : sub_system,
         error_code    : error_code,
     };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+    DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
 }
 
 void Copter::Log_Write_Baro(void)
 {
-    DataFlash.Log_Write_Baro(barometer);
+    if (!ahrs.have_ekf_logging()) {
+        DataFlash.Log_Write_Baro(barometer);
+    }
 }
 
 struct PACKED log_ParameterTuning {
@@ -729,13 +727,11 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
       "NTUN", "Qffffffffff", "TimeUS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),
-      "CTUN", "Qfffffecchh", "TimeUS,ThrIn,AngBst,ThrOut,DAlt,Alt,BarAlt,DSAlt,SAlt,DCRt,CRt" },
+      "CTUN", "Qfffffeccfhh", "TimeUS,ThrIn,ABst,ThrOut,DAlt,Alt,BAlt,DSAlt,SAlt,TAlt,DCRt,CRt" },
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
-      "PM",  "QHHIhBH",    "TimeUS,NLon,NLoop,MaxT,PMT,I2CErr,INSErr" },
+      "PM",  "QHHIhBHI",    "TimeUS,NLon,NLoop,MaxT,PMT,I2CErr,INSErr,LogDrop" },
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt),
       "MOTB", "Qffff",  "TimeUS,LiftMax,BatVolt,BatRes,ThLimit" },
-    { LOG_STARTUP_MSG, sizeof(log_Startup),         
-      "STRT", "Q",            "TimeUS" },
     { LOG_EVENT_MSG, sizeof(log_Event),         
       "EV",   "QB",           "TimeUS,Id" },
     { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),         

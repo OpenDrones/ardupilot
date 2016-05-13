@@ -546,7 +546,7 @@ def fly_gps_glitch_loiter_test(mavproxy, mav, timeout=30, max_distance=20):
     return success
 
 # fly_gps_glitch_auto_test - fly mission and test reaction to gps glitch
-def fly_gps_glitch_auto_test(mavproxy, mav, timeout=30, max_distance=100):
+def fly_gps_glitch_auto_test(mavproxy, mav, timeout=120):
 
     # set-up gps glitch array
     glitch_lat = [0.0002996,0.0006958,0.0009431,0.0009991,0.0009444,0.0007716,0.0006221]
@@ -584,7 +584,6 @@ def fly_gps_glitch_auto_test(mavproxy, mav, timeout=30, max_distance=100):
     # record time and position
     tstart = get_sim_time(mav)
     tnow = tstart
-    start_pos = sim_location(mav)
 
     # initialise current glitch
     glitch_current = 0;
@@ -595,7 +594,7 @@ def fly_gps_glitch_auto_test(mavproxy, mav, timeout=30, max_distance=100):
     # record position for 30 seconds
     while glitch_current < glitch_num:
         tnow = get_sim_time(mav)
-        desired_glitch_num = int((tnow - tstart) * 2)
+        desired_glitch_num = int((tnow - tstart) * 2.2)
         if desired_glitch_num > glitch_current and glitch_current != -1:
             glitch_current = desired_glitch_num
             # apply next glitch
@@ -610,7 +609,7 @@ def fly_gps_glitch_auto_test(mavproxy, mav, timeout=30, max_distance=100):
     mavproxy.send('param set SIM_GPS_GLITCH_Y 0\n')
 
     # continue with the mission
-    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500, mode='AUTO')
+    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500)
 
     # wait for arrival back home
     m = mav.recv_match(type='VFR_HUD', blocking=True)
@@ -801,8 +800,12 @@ def fly_auto_test(mavproxy, mav):
     mavproxy.send('rc 3 1500\n')
 
     # fly the mission
-    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500, mode='AUTO')
+    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500)
 
+    # land if mission failed
+    if ret == False:
+        land(mavproxy, mav)
+    
     # set throttle to minimum
     mavproxy.send('rc 3 1000\n')
 
@@ -835,7 +838,7 @@ def fly_avc_test(mavproxy, mav):
     mavproxy.send('rc 3 1500\n')
 
     # fly the mission
-    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500, mode='AUTO')
+    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500)
 
     # set throttle to minimum
     mavproxy.send('rc 3 1000\n')
@@ -866,7 +869,7 @@ def fly_mission(mavproxy, mav, height_accuracy=-1, target_altitude=None):
     mavproxy.send('wp set 1\n')
     mavproxy.send('switch 4\n') # auto mode
     wait_mode(mav, 'AUTO')
-    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500, mode='AUTO')
+    ret = wait_waypoint(mav, 0, num_wp-1, timeout=500)
     expect_msg = "Reached command #%u" % (num_wp-1)
     if (ret):
         mavproxy.expect(expect_msg)
@@ -905,7 +908,7 @@ def setup_rc(mavproxy):
     # zero throttle
     mavproxy.send('rc 3 1000\n')
 
-def fly_ArduCopter(viewerip=None, map=False):
+def fly_ArduCopter(viewerip=None, map=False, valgrind=False):
     '''fly ArduCopter in SIL
 
     you can pass viewerip as an IP address to optionally send fg and
@@ -929,7 +932,7 @@ def fly_ArduCopter(viewerip=None, map=False):
     util.pexpect_close(mavproxy)
     util.pexpect_close(sil)
 
-    sil = util.start_SIL('ArduCopter', model='+', home=home, speedup=speedup_default)
+    sil = util.start_SIL('ArduCopter', model='+', home=home, speedup=speedup_default, valgrind=valgrind)
     options = '--sitl=127.0.0.1:5501 --out=127.0.0.1:19550 --quadcopter --streamrate=5'
     if viewerip:
         options += ' --out=%s:14550' % viewerip

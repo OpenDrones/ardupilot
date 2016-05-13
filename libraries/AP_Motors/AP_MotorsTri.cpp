@@ -82,6 +82,10 @@ const AP_Param::GroupInfo AP_MotorsTri::var_info[] = {
 // init
 void AP_MotorsTri::Init()
 {
+    add_motor_num(AP_MOTORS_MOT_1);
+    add_motor_num(AP_MOTORS_MOT_2);
+    add_motor_num(AP_MOTORS_MOT_4);
+    
     // set update rate for the 3 motors (but not the servo on channel 7)
     set_update_rate(_speed_hz);
 
@@ -90,8 +94,8 @@ void AP_MotorsTri::Init()
     motor_enabled[AP_MOTORS_MOT_2] = true;
     motor_enabled[AP_MOTORS_MOT_4] = true;
 
-    // disable CH7 from being used as an aux output (i.e. for camera gimbal, etc)
-    RC_Channel_aux::disable_aux_channel(AP_MOTORS_CH_TRI_YAW);
+    // allow mapping of motor7
+    add_motor_num(AP_MOTORS_CH_TRI_YAW);
 }
 
 // set update rate to motors - a value in hertz
@@ -158,10 +162,10 @@ void AP_MotorsTri::output_to_motors()
 uint16_t AP_MotorsTri::get_motor_mask()
 {
     // tri copter uses channels 1,2,4 and 7
-    return rc_map_mask(1U << AP_MOTORS_MOT_1) |
-        (1U << AP_MOTORS_MOT_2) |
-        (1U << AP_MOTORS_MOT_4) |
-        (1U << AP_MOTORS_CH_TRI_YAW);
+    return rc_map_mask((1U << AP_MOTORS_MOT_1) |
+                       (1U << AP_MOTORS_MOT_2) |
+                       (1U << AP_MOTORS_MOT_4) |
+                       (1U << AP_MOTORS_CH_TRI_YAW));
 }
 
 // output_armed - sends commands to the motors
@@ -339,4 +343,25 @@ int16_t AP_MotorsTri::calc_yaw_radio_output(float yaw_input, float yaw_input_max
     }
 
     return ret;
+}
+
+/*
+  call vehicle supplied thrust compensation if set. This allows for
+  vehicle specific thrust compensation for motor arrangements such as
+  the forward motors tilting
+*/
+void AP_MotorsTri::thrust_compensation(void)
+{
+    if (_thrust_compensation_callback) {
+        // convert 3 thrust values into an array indexed by motor number
+        float thrust[4] { _thrust_right, _thrust_left, 0, _thrust_rear };
+
+        // apply vehicle supplied compensation function
+        _thrust_compensation_callback(thrust, 4);
+
+        // extract compensated thrust values
+        _thrust_right = thrust[0];
+        _thrust_left  = thrust[1];
+        _thrust_rear  = thrust[3];
+    }
 }

@@ -128,6 +128,7 @@ void AP_MotorsMatrix::output_to_motors()
     hal.rcout->push();
 }
 
+
 // get_motor_mask - returns a bitmask of which outputs are being used for motors (1 means being used)
 //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
 uint16_t AP_MotorsMatrix::get_motor_mask()
@@ -200,7 +201,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             _thrust_rpyt_out[i] = roll_thrust * _roll_factor[i] + pitch_thrust * _pitch_factor[i];
             if (!is_zero(_yaw_factor[i])){
                 if (yaw_thrust * _yaw_factor[i] > 0.0f) {
-                    unused_range = fabsf((1.0 - (throttle_thrust_best_rpy + _thrust_rpyt_out[i]))/_yaw_factor[i]);
+                    unused_range = fabsf((1.0f - (throttle_thrust_best_rpy + _thrust_rpyt_out[i]))/_yaw_factor[i]);
                     if (yaw_allowed > unused_range) {
                         yaw_allowed = unused_range;
                     }
@@ -325,15 +326,8 @@ void AP_MotorsMatrix::add_motor_raw(int8_t motor_num, float roll_fac, float pitc
         // set order that motor appears in test
         _test_order[motor_num] = testing_order;
 
-        uint8_t chan;
-        if (RC_Channel_aux::find_channel((RC_Channel_aux::Aux_servo_function_t)(RC_Channel_aux::k_motor1+motor_num),
-                                         chan)) {
-            _motor_map[motor_num] = chan;
-            _motor_map_mask |= 1U<<motor_num;
-        } else {
-            // disable this channel from being used by RC_Channel_aux
-            RC_Channel_aux::disable_aux_channel(motor_num);
-        }
+        // call parent class method
+        add_motor_num(motor_num);
     }
 }
 
@@ -410,5 +404,18 @@ void AP_MotorsMatrix::normalise_rpy_factors()
                 _yaw_factor[i] = 0.5f*_yaw_factor[i]/yaw_fac;
             }
         }
+    }
+}
+
+
+/*
+  call vehicle supplied thrust compensation if set. This allows
+  vehicle code to compensate for vehicle specific motor arrangements
+  such as tiltrotors or tiltwings
+*/
+void AP_MotorsMatrix::thrust_compensation(void)
+{
+    if (_thrust_compensation_callback) {
+        _thrust_compensation_callback(_thrust_rpyt_out, AP_MOTORS_MAX_NUM_MOTORS);
     }
 }

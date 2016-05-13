@@ -118,8 +118,11 @@ void AP_AHRS_NavEKF::update_EKF1(void)
             start_time_ms = AP_HAL::millis();
         }
         // slight extra delay on EKF1 to prioritise EKF2 for memory
-        if (AP_HAL::millis() - start_time_ms > startup_delay_ms + 100U) {
+        if (AP_HAL::millis() - start_time_ms > startup_delay_ms + 100U || force_ekf) {
             ekf1_started = EKF1.InitialiseFilterDynamic();
+            if (force_ekf) {
+                return;
+            }
         }
     }
     if (ekf1_started) {
@@ -143,7 +146,7 @@ void AP_AHRS_NavEKF::update_EKF1(void)
             _gyro_estimate.zero();
             uint8_t healthy_count = 0;
             for (uint8_t i=0; i<_ins.get_gyro_count(); i++) {
-                if (_ins.get_gyro_health(i) && healthy_count < 2) {
+                if (_ins.get_gyro_health(i) && healthy_count < 2 && _ins.use_gyro(i)) {
                     _gyro_estimate += _ins.get_gyro(i);
                     healthy_count++;
                 }
@@ -189,8 +192,11 @@ void AP_AHRS_NavEKF::update_EKF2(void)
         if (start_time_ms == 0) {
             start_time_ms = AP_HAL::millis();
         }
-        if (AP_HAL::millis() - start_time_ms > startup_delay_ms) {
+        if (AP_HAL::millis() - start_time_ms > startup_delay_ms || force_ekf) {
             ekf2_started = EKF2.InitialiseFilter();
+            if (force_ekf) {
+                return;
+            }
         }
     }
     if (ekf2_started) {
@@ -214,7 +220,7 @@ void AP_AHRS_NavEKF::update_EKF2(void)
             _gyro_estimate.zero();
             uint8_t healthy_count = 0;
             for (uint8_t i=0; i<_ins.get_gyro_count(); i++) {
-                if (_ins.get_gyro_health(i) && healthy_count < 2) {
+                if (_ins.get_gyro_health(i) && healthy_count < 2 && _ins.use_gyro(i)) {
                     _gyro_estimate += _ins.get_gyro(i);
                     healthy_count++;
                 }
@@ -329,22 +335,21 @@ void AP_AHRS_NavEKF::reset_attitude(const float &_roll, const float &_pitch, con
 bool AP_AHRS_NavEKF::get_position(struct Location &loc) const
 {
     Vector3f ned_pos;
+    Location origin;
     switch (active_EKF_type()) {
 #if AP_AHRS_WITH_EKF1
     case EKF_TYPE1:
-        if (EKF1.getLLH(loc) && EKF1.getPosNED(ned_pos)) {
-            // fixup altitude using relative position from AHRS home, not
-            // EKF origin
-            loc.alt = get_home().alt - ned_pos.z*100;
+        if (EKF1.getLLH(loc) && EKF1.getPosNED(ned_pos) && EKF1.getOriginLLH(origin)) {
+            // fixup altitude using relative position from EKF origin
+            loc.alt = origin.alt - ned_pos.z*100;
             return true;
         }
         break;
 #endif
     case EKF_TYPE2:
-        if (EKF2.getLLH(loc) && EKF2.getPosNED(-1,ned_pos)) {
-            // fixup altitude using relative position from AHRS home, not
-            // EKF origin
-            loc.alt = get_home().alt - ned_pos.z*100;
+        if (EKF2.getLLH(loc) && EKF2.getPosNED(-1,ned_pos) && EKF2.getOriginLLH(origin)) {
+            // fixup altitude using relative position from EKF origin
+            loc.alt = origin.alt - ned_pos.z*100;
             return true;
         }
         break;
@@ -981,16 +986,16 @@ void AP_AHRS_NavEKF::getEkfControlLimits(float &ekfGndSpdLimit, float &ekfNavVel
 
 // get compass offset estimates
 // true if offsets are valid
-bool AP_AHRS_NavEKF::getMagOffsets(Vector3f &magOffsets)
+bool AP_AHRS_NavEKF::getMagOffsets(uint8_t mag_idx, Vector3f &magOffsets)
 {
     switch (ekf_type()) {
     case 0:
     case 1:
-        return EKF1.getMagOffsets(magOffsets);
+        return EKF1.getMagOffsets(mag_idx, magOffsets);
 
     case 2:
     default:
-        return EKF2.getMagOffsets(magOffsets);
+        return EKF2.getMagOffsets(mag_idx, magOffsets);
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     case EKF_TYPE_SITL:
@@ -1266,6 +1271,18 @@ bool AP_AHRS_NavEKF::getGpsGlitchStatus()
     return ekf_status.flags.gps_glitching;
 }
 
+
+// is the EKF backend doing its own sensor logging?
+bool AP_AHRS_NavEKF::have_ekf_logging(void) const
+{
+    switch (ekf_type()) {
+    case 2:
+        return EKF2.have_ekf_logging();
+    default:
+        break;
+    }
+    return false;
+}
 
 #endif // AP_AHRS_NAVEKF_AVAILABLE
 

@@ -555,6 +555,22 @@ AP_InertialSensor::detect_backends(void)
     _add_backend(AP_InertialSensor_QFLIGHT::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_QURT
     _add_backend(AP_InertialSensor_QURT::detect(*this));
+#elif HAL_INS_DEFAULT == HAL_INS_BBBMINI
+    AP_InertialSensor_Backend *backend = AP_InertialSensor_MPU9250::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_NAME));
+    if (backend) {
+        _add_backend(backend);
+        hal.console->printf("MPU9250: Onboard IMU detected\n");
+    } else {
+        hal.console->printf("MPU9250: Onboard IMU not detected\n");
+    }
+
+    backend = AP_InertialSensor_MPU9250::probe(*this, hal.spi->get_device(HAL_INS_MPU9250_NAME_EXT));
+    if (backend) {
+        _add_backend(backend);
+        hal.console->printf("MPU9250: External IMU detected\n");
+    } else {
+        hal.console->printf("MPU9250: External IMU not detected\n");
+    }
 #else
     #error Unrecognised HAL_INS_TYPE setting
 #endif
@@ -574,7 +590,7 @@ AP_InertialSensor::detect_backends(void)
 */
 bool AP_InertialSensor::_calculate_trim(const Vector3f &accel_sample, float& trim_roll, float& trim_pitch)
 {
-    trim_pitch = atan2f(accel_sample.x, pythagorous2(accel_sample.y, accel_sample.z));
+    trim_pitch = atan2f(accel_sample.x, norm(accel_sample.y, accel_sample.z));
     trim_roll = atan2f(-accel_sample.y, -accel_sample.z);
     if (fabsf(trim_roll) > radians(10) ||
         fabsf(trim_pitch) > radians(10)) {
@@ -1156,7 +1172,7 @@ float AP_InertialSensor::get_delta_velocity_dt(uint8_t i) const
  */
 float AP_InertialSensor::get_delta_angle_dt(uint8_t i) const
 {
-    if (_delta_angle_valid[i]) {
+    if (_delta_angle_valid[i] && _delta_angle_dt[i] > 0) {
         return _delta_angle_dt[i];
     }
     return get_delta_time();
@@ -1226,11 +1242,12 @@ void AP_InertialSensor::set_delta_velocity(uint8_t instance, float deltavt, cons
 /*
   set delta angle for next update
  */
-void AP_InertialSensor::set_delta_angle(uint8_t instance, const Vector3f &deltaa)
+void AP_InertialSensor::set_delta_angle(uint8_t instance, const Vector3f &deltaa, float deltaat)
 {
     if (instance < INS_MAX_INSTANCES) {
         _delta_angle_valid[instance] = true;
         _delta_angle[instance] = deltaa;
+        _delta_angle_dt[instance] = deltaat;
     }
 }
 
@@ -1364,7 +1381,7 @@ void AP_InertialSensor::_acal_save_calibrations()
             // The first level step of accel cal will be taken as gnd truth,
             // i.e. trim will be set as per the output of primary accel from the level step
             get_primary_accel_cal_sample_avg(0,aligned_sample);
-            _trim_pitch = atan2f(aligned_sample.x, pythagorous2(aligned_sample.y, aligned_sample.z));
+            _trim_pitch = atan2f(aligned_sample.x, norm(aligned_sample.y, aligned_sample.z));
             _trim_roll = atan2f(-aligned_sample.y, -aligned_sample.z);
             _new_trim = true;
             break;

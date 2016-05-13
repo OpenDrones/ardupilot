@@ -74,6 +74,7 @@ public:
         k_motor6                = 38,
         k_motor7                = 39,
         k_motor8                = 40,
+        k_motor_tilt            = 41,            ///< tiltrotor motor tilt control
         k_rcin1                 = 51,            ///< these are for pass-thru from arbitrary rc inputs
         k_rcin2                 = 52,
         k_rcin3                 = 53,
@@ -82,6 +83,14 @@ public:
         k_rcin6                 = 56,
         k_rcin7                 = 57,
         k_rcin8                 = 58,
+        k_rcin9                 = 59,
+        k_rcin10                = 60,
+        k_rcin11                = 61,
+        k_rcin12                = 62,
+        k_rcin13                = 63,
+        k_rcin14                = 64,
+        k_rcin15                = 65,
+        k_rcin16                = 66,
         k_nr_aux_servo_functions         ///< This must be the last enum value (only add new values _before_ this one)
     } Aux_servo_function_t;
 
@@ -100,7 +109,7 @@ public:
 	static void set_radio_trimmed(Aux_servo_function_t function, int16_t value);
 
 	// set and save the trim for a function channel to radio_in
-	static void set_radio_trim(Aux_servo_function_t function);
+	static void set_trim_to_radio_in_for(Aux_servo_function_t function);
 
 	// set radio_out to radio_min
 	static void set_radio_to_min(Aux_servo_function_t function);
@@ -115,8 +124,11 @@ public:
 	static void copy_radio_in_out(Aux_servo_function_t function, bool do_input_output=false);
 
 	// set servo_out
-	static void set_servo_out(Aux_servo_function_t function, int16_t value);
+	static void set_servo_out_for(Aux_servo_function_t function, int16_t value);
 
+    // setup failsafe for an auxillary channel function, by pwm
+    static void set_servo_failsafe_pwm(RC_Channel_aux::Aux_servo_function_t function, uint16_t pwm);
+    
 	// setup failsafe for an auxillary channel function
 	static void set_servo_failsafe(Aux_servo_function_t function, RC_Channel::LimitValue limit);
 

@@ -65,7 +65,8 @@ enum FlightMode {
     QSTABILIZE    = 17,
     QHOVER        = 18,
     QLOITER       = 19,
-    QLAND         = 20
+    QLAND         = 20,
+    QRTL          = 21
 };
 
 // type of stick mixing enabled
@@ -137,7 +138,6 @@ enum log_messages {
 #define MASK_LOG_RC                     (1<<13)
 #define MASK_LOG_SONAR                  (1<<14)
 #define MASK_LOG_ARM_DISARM             (1<<15)
-#define MASK_LOG_WHEN_DISARMED          (1UL<<16)
 #define MASK_LOG_IMU_RAW                (1UL<<19)
 
 // Waypoint Modes

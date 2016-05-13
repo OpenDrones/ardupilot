@@ -37,7 +37,7 @@ void Plane::adjust_altitude_target()
     } else if (flight_stage == AP_SpdHgtControl::FLIGHT_LAND_APPROACH ||
             flight_stage == AP_SpdHgtControl::FLIGHT_LAND_PREFLARE) {
         setup_landing_glide_slope();
-    } else if (nav_controller->reached_loiter_target()) {
+    } else if (reached_loiter_target()) {
         // once we reach a loiter target then lock to the final
         // altitude target
         set_target_altitude_location(next_WP_loc);
@@ -48,7 +48,7 @@ void Plane::adjust_altitude_target()
 
         // stay within the range of the start and end locations in altitude
         constrain_target_altitude_location(next_WP_loc, prev_WP_loc);
-    } else if (mission.get_current_do_cmd().id != MAV_CMD_CONDITION_CHANGE_ALT) {
+    } else {
         set_target_altitude_location(next_WP_loc);
     }
 
@@ -66,6 +66,7 @@ void Plane::setup_glide_slope(void)
     auto_state.wp_proportion = location_path_proportion(current_loc, 
                                                         prev_WP_loc, next_WP_loc);
     SpdHgt_Controller->set_path_proportion(auto_state.wp_proportion);
+    update_flight_stage();
 
     /*
       work out if we will gradually change altitude, or try to get to
@@ -131,6 +132,20 @@ int32_t Plane::relative_altitude_abs_cm(void)
     return labs(current_loc.alt - home.alt);
 }
 
+/*
+  return relative altitude in meters (relative to terrain, if available,
+  or home otherwise)
+ */
+float Plane::relative_ground_altitude(void)
+{
+#if AP_TERRAIN_AVAILABLE
+    float altitude;
+    if (terrain.status() == AP_Terrain::TerrainStatusOK && terrain.height_above_terrain(altitude, true)) {
+        return altitude;
+    }
+#endif
+    return relative_altitude();
+}
 
 /*
   set the target altitude to the current altitude. This is used when 
@@ -475,7 +490,7 @@ float Plane::lookahead_adjustment(void)
         // there is no target waypoint in FBWB, so use yaw as an approximation
         bearing_cd = ahrs.yaw_sensor;
         distance = g.terrain_lookahead;
-    } else if (!nav_controller->reached_loiter_target()) {
+    } else if (!reached_loiter_target()) {
         bearing_cd = nav_controller->target_bearing_cd();
         distance = constrain_float(auto_state.wp_distance, 0, g.terrain_lookahead);
     } else {
@@ -581,7 +596,9 @@ void Plane::rangefinder_height_update(void)
                 (flight_stage == AP_SpdHgtControl::FLIGHT_LAND_APPROACH ||
                  flight_stage == AP_SpdHgtControl::FLIGHT_LAND_PREFLARE ||
                  flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL ||
-                 control_mode == QLAND) &&
+                 control_mode == QLAND ||
+                 control_mode == QRTL ||
+                 (control_mode == AUTO && plane.mission.get_current_nav_cmd().id == MAV_CMD_NAV_VTOL_LAND)) &&
                 g.rangefinder_landing) {
                 rangefinder_state.in_use = true;
                 gcs_send_text_fmt(MAV_SEVERITY_INFO, "Rangefinder engaged at %.2fm", (double)rangefinder_state.height_estimate);

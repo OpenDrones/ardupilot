@@ -65,8 +65,6 @@ public:
     void                set_throttle(float throttle_in) { _throttle_in = throttle_in; };   // range 0 ~ 1
     void                set_throttle_filter_cutoff(float filt_hz) { _throttle_filter.set_cutoff_frequency(filt_hz); }
 
-    void                set_stabilizing(bool stabilizing) { _flags.stabilizing = stabilizing; }
-
     // accessors for roll, pitch, yaw and throttle inputs to motors
     float               get_roll() const { return _roll_in; }
     float               get_pitch() const { return _pitch_in; }
@@ -137,6 +135,9 @@ protected:
     virtual void        rc_set_freq(uint32_t mask, uint16_t freq_hz);
     virtual void        rc_enable_ch(uint8_t chan);
     virtual uint32_t    rc_map_mask(uint32_t mask) const;
+
+    // add a motor to the motor map
+    void add_motor_num(int8_t motor_num);
     
     // update the throttle input filter
     virtual void        update_throttle_filter() = 0;
@@ -173,6 +174,7 @@ protected:
     // mapping to output channels
     uint8_t             _motor_map[AP_MOTORS_MAX_NUM_MOTORS];
     uint16_t            _motor_map_mask;
+    uint16_t            _motor_fast_mask;
 
     // pass through variables
     float _roll_radio_passthrough = 0.0f;     // roll input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
