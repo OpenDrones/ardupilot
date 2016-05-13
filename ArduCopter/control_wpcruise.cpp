@@ -128,7 +128,7 @@ void Copter::wpcruise_run()
             }
 
             // calc destination position step by step
-            if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old)))
+            if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old) && WpCruise_state != Return_Bp_Loiter))
             {
                 Vector3f destination;
                 switch(WpCruise_state) {
@@ -136,12 +136,14 @@ void Copter::wpcruise_run()
                     case Return_Bp_Loiter:
                     calc_breakpoint_destination(destination);
                     break;
+                    
                     // change state of waypoint cruise and delete breakpoint from storage
                     case Return_Bp_Wp_Nav:
                     // calculate break point position
                     calc_breakpoint_destination(destination);
                     WpCruise_state = Waypoint_Nav;
                     break;
+                    
                     // update waypoint nav destination
                     case Waypoint_Nav:
                     if (mission.num_commands() == 4)
@@ -152,6 +154,7 @@ void Copter::wpcruise_run()
                     // enable sprayer
                     sprayer.enable(true);
                     break;
+                    
                     default:
                     // do nothing
                     break;
@@ -169,7 +172,7 @@ void Copter::wpcruise_run()
 
                 wpcruise.flag_init_destination = false;
             }
-
+            // calc flag to reach destination
             wpcruise.flag_reach_destination_old = wp_nav.reached_wp_destination();
             // loiter and disable sprayer when flow break
             if (WpCruise_state != Wpcruise_loiter && (sprayer.get_drain_off() || failsafe.battery))
