@@ -355,7 +355,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             break;
 
         case AUXSW_CLEAR_AND_SAVE_WP:
-            AP_Notify::flags.succeed_save_wp = false;
+            AP_Notify::flags.succeed_save_wp = 0;
             // save waypoint when switch is brought high
             static uint32_t last_call_ms;
             if (ch_flag == AUX_SWITCH_HIGH) {
@@ -686,7 +686,7 @@ void Copter::auto_trim()
 void Copter::save_add_waypoint()
 {
     // do not allow saving new waypoints while we're in auto or disarmed
-    if(control_mode == AUTO || !motors.armed()) {
+    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
         return;
     }
 
@@ -717,7 +717,7 @@ void Copter::save_add_waypoint()
                 Log_Write_Event(DATA_SAVEWP_ADD_WP);
             }
         }
-    AP_Notify::flags.succeed_save_wp = true;
+    AP_Notify::flags.succeed_save_wp = 1;
     return;
 }
 
@@ -725,7 +725,7 @@ void Copter::save_add_waypoint()
 void Copter::clear_and_save_waypoint()
 {
     // do not allow saving new waypoints while we're in auto or disarmed
-    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed()) {
+    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
         return;
     }
 
@@ -772,7 +772,7 @@ void Copter::clear_and_save_waypoint()
 
     if (mission.add_cmd(cmd)) {
         Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);
-        AP_Notify::flags.succeed_save_wp = true;
+        AP_Notify::flags.succeed_save_wp = 2;
     } 
     return;
 }
