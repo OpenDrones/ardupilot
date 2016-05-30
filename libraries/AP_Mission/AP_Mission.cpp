@@ -1468,14 +1468,14 @@ bool AP_Mission::calc_destination_pos(Location &loc)
         case 0:
         case 1:
         loc = cmd2.content.location;
-        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100);
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100.0);
         break;
 
         // calc destination according to point A from storage
         case 2:
         case 3:
         loc = cmd1.content.location;
-        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100);
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100.0);
         break;
     }
     return true;
