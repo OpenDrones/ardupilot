@@ -56,7 +56,7 @@ private:
         uint8_t failsafe_radio        : 1;    // 1 if radio failsafe
         uint8_t vehicle_lost          : 1;    // 1 if lost copter tone requested
         uint8_t failsafe_ekf          : 1;    // 1 if ekf bad
-        uint8_t succeed_save_wp       : 1;    // 1 if save wp successfully
+        uint8_t succeed_save_wp       : 2;    // 0 if save wp failed, 1 if save wp successfully, 2 if clear and save wp successfully
     } flags;
 
     int8_t _cont_tone_playing;

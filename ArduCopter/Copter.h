@@ -729,10 +729,11 @@ private:
     void brake_run();
     bool circle_init(bool ignore_checks);
     void circle_run();
-    bool cruise_init(bool ignore_checks);
+    bool cruise_init();
     void cruise_run();
-    void init_cruise_vel(float &cruise_vel_fwd, float &cruise_vel_rgt);
-    void get_pilot_cruise_vel(float &target_vel, float vel, float pilot_in);
+    void init_cruise_target();
+    void update_cruise_des(Vector3f&);
+    bool reach_cruise_des(Vector3f&);
     bool wpcruise_init();
     void wpcruise_run();
     void calc_breakpoint_destination(Vector3f&);

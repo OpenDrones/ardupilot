@@ -4,44 +4,34 @@
 
 #if CRUISE_ENABLED == ENABLED
 
-#define CRUISE_CURR_SPEED_MIN_DEFAULT   100.0f   // speed threshold to judge cruise forward or back
-#define CRUISE_PILOT_SPEED_MAX_DEFAULT  1000.0f  // max speed that pilot can control in cruise
-#define PILOT_ROLL_PITCH_THRESHOLD      300.0f   // threshold pilot pitch or roll to recalculate initial cruise velocity
+#define CRUISE_CURR_SPEED_MIN_DEFAULT       50.0f     // speed threshold to judge cruise forward or back
+#define CRUISE_DESTINATION_DISTANCE_CM      5000.0f    // distance to calc next cruise destination
+#define DISTANCE_TO_CALC_NEXT_CRUISE_DES_CM 1000.0f     // min distance to judge need to calc next cruise distination
 
 static struct {
-     // cruise desired forward and right velocity without pilot input
-    float vel_fwd;
-    float vel_rgt;
-
-    // cruise desired forward and right velocity with pilot input
-    float target_vel_fwd;
-    float target_vel_rgt;
-
-    // cruise desired velocity NE
-    Vector2f target_vel_ef;
-
-    // final output
-    int16_t roll;   // final roll angle sent to attitude controller
-    int16_t pitch;  // final pitch angle sent to attitude controller
+    bool flag_reach_cruise_des;
+    bool flag_reach_cruise_des_old;
+    bool flag_init_cruise_des;
+     // get current bearing when changing into cruise mode
+    float cos_bearing, sin_bearing;
+    // cruise destination
+    Vector3f destination;
 } cruise;
 
 // cruise_init - initialise cruise controller
-bool Copter::cruise_init(bool ignore_checks)
+bool Copter::cruise_init()
 {
-    if (position_ok() || ignore_checks) {
-
-        // initialize vertical speed and acceleration
-        pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
-        pos_control.set_accel_z(g.pilot_accel_z);
+    if (position_ok()) {
+        const Vector3f& curr_vel = inertial_nav.get_velocity();
+        pos_control.set_desired_velocity_xy(curr_vel.x,curr_vel.y);
+        // initialise waypoint and spline controller
+        wp_nav.wp_and_spline_init();
 
         // initialise target position to stopping point
         pos_control.set_target_to_stopping_point_xy();
         pos_control.set_target_to_stopping_point_z();
 
-        // init_xy_controller - initialise the xy controller
-        pos_control.init_xy_controller();
-
-        init_cruise_vel(cruise.vel_fwd, cruise.vel_rgt);
+        init_cruise_target();
         return true;
     }else{
         return false;
@@ -53,10 +43,8 @@ bool Copter::cruise_init(bool ignore_checks)
 
 void Copter::cruise_run()
 {
-    float target_roll, target_pitch;  // pilot's roll and pitch angle inputs
     float target_yaw_rate = 0;          // pilot desired yaw rate in centi-degrees/sec
     float target_climb_rate = 0;      // pilot desired climb rate in centimeters/sec
-    float takeoff_climb_rate = 0.0f;    // takeoff induced climb rate
 
     // if not auto armed or motor interlock not enabled set throttle to zero and exit immediately
     if(!ap.auto_armed || !motors.get_interlock()) {
@@ -77,9 +65,6 @@ void Copter::cruise_run()
         // get pilot desired climb rate (for alt-hold mode and take-off)
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
         target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
-
-        // get takeoff adjusted pilot and takeoff climb rates
-        takeoff_get_climb_rates(target_climb_rate, takeoff_climb_rate);
 
         // check for take-off
         if (ap.land_complete && (takeoff_state.running || channel_throttle->control_in > get_takeoff_trigger_throttle())) {
@@ -107,91 +92,77 @@ void Copter::cruise_run()
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(channel_throttle->control_in)-throttle_average);
         return;
     }else{
-        // convert pilot input to lean angles
-        get_pilot_desired_lean_angles(channel_roll->control_in, channel_pitch->control_in, target_roll, target_pitch);
-            
-        // calc target cruise speed without pilot input
-        if (cruise.vel_fwd > 0)
+        // calc next cruise destination
+        if (cruise.flag_init_cruise_des || (cruise.flag_reach_cruise_des && !cruise.flag_reach_cruise_des_old))
         {
-            cruise.vel_fwd = wp_nav.get_speed_xy();
+            update_cruise_des(cruise.destination);
+            // set destination
+            if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                wp_nav.set_wp_xy_origin_and_destination(cruise.destination);
+            } else {
+                    wp_nav.set_wp_destination(cruise.destination);
+                }
+            cruise.flag_init_cruise_des = false;
+        }
+        cruise.flag_reach_cruise_des_old = cruise.flag_reach_cruise_des;
+        cruise.flag_reach_cruise_des = reach_cruise_des(cruise.destination);
+
+        // run waypoint controller
+        if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
+            wp_nav.update_wpnav();
         } else {
-            cruise.vel_fwd = -wp_nav.get_speed_xy();
-        }
-        // calc target cruise velocity in body-frame according to pilot input roll and pitch
-        get_pilot_cruise_vel(cruise.target_vel_fwd, cruise.vel_fwd, -target_pitch);
-        get_pilot_cruise_vel(cruise.target_vel_rgt, cruise.vel_rgt, target_roll);
-
-        // convert desired velocity from body frame reference to earth frame reference
-        cruise.target_vel_ef.x = cruise.target_vel_fwd;
-        cruise.target_vel_ef.y = cruise.target_vel_rgt;
-        rotate_body_frame_to_NE(cruise.target_vel_ef.x, cruise.target_vel_ef.y);
-
-        // set desired velocity
-        pos_control.set_desired_velocity_xy(cruise.target_vel_ef.x, cruise.target_vel_ef.y);
-
-        // calculate dt
-        float dt = pos_control.time_since_last_xy_update();
-
-        // update at poscontrol update rate
-        if (dt >= pos_control.get_dt_xy()) {
-            // sanity check dt
-            if (dt >= 0.2f) {
-                dt = 0.0f;
-            }
-
-            // call velocity controller which includes xy axis controller
-            pos_control.update_xy_controller(AC_PosControl::XY_MODE_POS_AND_VEL_FF,ekfNavVelGainScaler);
-        }
-        
-        // constrain target pitch/roll angles
-        cruise.roll = constrain_int16(pos_control.get_roll(), -aparm.angle_max, aparm.angle_max);
-        cruise.pitch = constrain_int16(pos_control.get_pitch(), -aparm.angle_max, aparm.angle_max);
-
-        // update attitude controller targets
-        attitude_control.angle_ef_roll_pitch_rate_ef_yaw(cruise.roll, cruise.pitch, target_yaw_rate);
-
-        // throttle control
-        if (sonar_enabled) {
-            // if sonar is ok, use surface tracking
-            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
-        }
-        // update altitude target and call position controller
-        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
-        pos_control.add_takeoff_climb_rate(takeoff_climb_rate, G_Dt);
+            wp_nav.update_wpnav_xy();
+                // altitude control according to sonar
+                if (sonar_enabled) {
+                    // if sonar is ok, use surface tracking
+                    target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+                }
+                // update altitude target and call position controller
+                pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+            }    
+        // call z-axis position controller
         pos_control.update_z_controller();
+        // roll & pitch from waypoint controller, yaw rate from pilot
+        attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
     }
 }
 
 // calc initial cruise velocity in body-frame
-void Copter::init_cruise_vel(float &cruise_vel_fwd, float &cruise_vel_rgt)
+void Copter::init_cruise_target()
 {
-    float vel_fwd, vel_rgt;
+    float vel_fwd;
     const Vector3f& curr_vel = inertial_nav.get_velocity();
-
     // convert inertial nav earth-frame velocities_cm/s to body-frame
     vel_fwd = curr_vel.x*ahrs.cos_yaw() + curr_vel.y*ahrs.sin_yaw();
-    vel_rgt = -curr_vel.x*ahrs.sin_yaw() + curr_vel.y*ahrs.cos_yaw();
-    
-    // if copter are flying to right or left in body-frame now, make cruise velocity equals to 0, to confirm only fly forward and back in cruise
-    if (fabsf(vel_rgt) > CRUISE_CURR_SPEED_MIN_DEFAULT) {
-        cruise_vel_fwd = 0;
-        cruise_vel_rgt = 0;
-        return;
-    }
-        if (vel_fwd < -CRUISE_CURR_SPEED_MIN_DEFAULT) {
-            cruise_vel_fwd = -wp_nav.get_speed_xy();
-        } else {
-            cruise_vel_fwd = wp_nav.get_speed_xy();
+    // init cruise speed direction
+    if (vel_fwd < -CRUISE_CURR_SPEED_MIN_DEFAULT) {
+        cruise.cos_bearing = -ahrs.cos_yaw();
+        cruise.sin_bearing = -ahrs.sin_yaw();
+    } else {
+        cruise.cos_bearing = ahrs.cos_yaw();
+        cruise.sin_bearing = ahrs.sin_yaw();
         }
-    cruise_vel_rgt = 0;
+    cruise.flag_reach_cruise_des = false;
+    cruise.flag_reach_cruise_des_old = false;
+    cruise.flag_init_cruise_des = true;
 }
 
-// calc target cruise velocity in body-frame according to pilot input roll and pitch
-void Copter::get_pilot_cruise_vel(float &target_vel, float vel, float pilot_in)
+// update cruise destination
+void Copter::update_cruise_des(Vector3f& destination)
 {
-    float angle_max = constrain_float(aparm.angle_max,1000,8000);
-    target_vel = vel + CRUISE_PILOT_SPEED_MAX_DEFAULT*pilot_in/angle_max;
-    target_vel = constrain_int16(target_vel, -1500, 1500);
+    const Vector3f &curr_pos = inertial_nav.get_position();
+    destination.x = curr_pos.x + CRUISE_DESTINATION_DISTANCE_CM * cruise.cos_bearing;
+    destination.y = curr_pos.y + CRUISE_DESTINATION_DISTANCE_CM * cruise.sin_bearing;
+    destination.z = curr_pos.z;
+}
+
+// flag to reach cruise destination
+bool Copter::reach_cruise_des(Vector3f& destination)
+{
+    const Vector3f &curr_pos = inertial_nav.get_position();
+    float distance_target;
+    distance_target = pv_get_horizontal_distance_cm(destination, curr_pos);
+    return distance_target < DISTANCE_TO_CALC_NEXT_CRUISE_DES_CM;
 }
 
 #endif  // CRUISE_ENABLED == ENABLED

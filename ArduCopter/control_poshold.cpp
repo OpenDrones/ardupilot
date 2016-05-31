@@ -179,7 +179,10 @@ void Copter::poshold_run()
             set_throttle_takeoff();
         }
     }
-
+    // relax loiter target during takeoff
+    if (takeoff_state.running) {
+        wp_nav.loiter_soften_for_landing();
+    }
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
         wp_nav.loiter_soften_for_landing();

@@ -60,15 +60,21 @@ void Copter::takeoff_timer_start(float alt_cm)
     float speed = min(wp_nav.get_speed_up(), max(g.pilot_velocity_z_max*2.0f/3.0f, g.pilot_velocity_z_max-50.0f));
 
     // sanity check speed and target
-    if (takeoff_state.running || speed <= 0.0f || alt_cm <= 0.0f) {
+    if (takeoff_state.running || speed <= 0.0f) {
         return;
     }
 
     // initialise takeoff state
     takeoff_state.running = true;
-    takeoff_state.speed = speed;
     takeoff_state.start_ms = millis();
-    takeoff_state.time_ms = (alt_cm/takeoff_state.speed) * 1.0e3f;
+    
+    if (alt_cm <= 0.0f) {
+        takeoff_state.time_ms = max(2.0, (alt_cm/speed)) * 1.0e3f;
+        takeoff_state.speed = 0;
+    } else {
+        takeoff_state.time_ms = (alt_cm/speed) * 1.0e3f;
+        takeoff_state.speed = speed;
+    }
 }
 
 // stop takeoff

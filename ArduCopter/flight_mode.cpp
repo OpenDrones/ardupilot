@@ -96,7 +96,7 @@ bool Copter::set_mode(uint8_t mode)
             break;
 
         case CRUISE:
-            success = cruise_init(ignore_checks);
+            success = cruise_init();
             break;
 
         case WPCRUISE:
