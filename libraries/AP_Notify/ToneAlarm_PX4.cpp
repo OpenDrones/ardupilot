@@ -250,6 +250,15 @@ void ToneAlarm_PX4::update()
         }
     }
 
+    // check if drain off
+    if (flags.drain_off != AP_Notify::flags.drain_off) {
+        flags.drain_off = AP_Notify::flags.drain_off;
+        if (flags.drain_off) {
+            // drain off warning tune
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS);
+        }
+    }
+
     // save waypoint successfully
     if (flags.succeed_save_wp != AP_Notify::flags.succeed_save_wp) {
         flags.succeed_save_wp = AP_Notify::flags.succeed_save_wp;
