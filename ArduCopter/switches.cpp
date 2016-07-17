@@ -235,6 +235,7 @@ void Copter::init_aux_switch_function(int8_t ch_option, uint8_t ch_flag)
         case AUXSW_ACRO_TRAINER:
         case AUXSW_EPM:
         case AUXSW_SPRAYER:
+        case AUXSW_SONAR:
         case AUXSW_PARACHUTE_ENABLE:
         case AUXSW_PARACHUTE_3POS:      // we trust the vehicle will be disarmed so even if switch is in release position the chute will not release
         case AUXSW_RETRACT_MOUNT:
@@ -385,7 +386,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 sonar_enabled = true;
                 if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
                     flag_reset_target_sonar_alt = true;
-                    target_sonar_alt = constrain_float(sonar_alt, 150, 800);
+                    target_sonar_alt = sonar_alt;
                 } else {
                     flag_reset_target_sonar_alt = false;
                 }
