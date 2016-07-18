@@ -168,6 +168,8 @@ AC_Sprayer::update()
 
     // exit immediately if we are disabled (perhaps set pwm values back to defaults)
     if (!_enabled) {
+        _drain_off_pre_time = 0;
+        _flags.drain_off_precheck = false;
         return;
     }
 
@@ -231,19 +233,17 @@ AC_Sprayer::update()
             _flags.drain_off_precheck = false;
             _drain_off_pre_time = 0;           
         } else {
+
             _flags.drain_off = false;
-            if( _drain_off_pre_time == 0)
-                _drain_off_pre_time = now;
-            else {
-                if((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay) {
-                        _flags.drain_off_precheck = true;
-                        _drain_off_pre_time = 0;   
-                }
-                else {
-                    if( flow == -1) {
-                        _drain_off_pre_time = now;                       
-                    }
-                }
+            if (flow > 0)
+            {
+                if (_drain_off_pre_time == 0)
+                    _drain_off_pre_time = now;
+                else if ((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay) {
+                            _flags.drain_off_precheck = true;
+                        }
+            } else {
+                _drain_off_pre_time = 0;
             }
         }
     }

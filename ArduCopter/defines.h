@@ -342,6 +342,7 @@ enum Wpcruisestate {
 #define DATA_ROTOR_SPEED_BELOW_CRITICAL     59  // Heli only
 #define DATA_EKF_ALT_RESET                  60
 #define DATA_CLEAR_AND_SAVE_WP              61
+#define DATA_SPRAY_DRAIN_OFF                62  // drain off during spraying
 
 // Centi-degrees to radians
 #define DEGX100 5729.57795f

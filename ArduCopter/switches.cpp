@@ -235,6 +235,7 @@ void Copter::init_aux_switch_function(int8_t ch_option, uint8_t ch_flag)
         case AUXSW_ACRO_TRAINER:
         case AUXSW_EPM:
         case AUXSW_SPRAYER:
+        case AUXSW_SONAR:
         case AUXSW_PARACHUTE_ENABLE:
         case AUXSW_PARACHUTE_3POS:      // we trust the vehicle will be disarmed so even if switch is in release position the chute will not release
         case AUXSW_RETRACT_MOUNT:
@@ -385,7 +386,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 sonar_enabled = true;
                 if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
                     flag_reset_target_sonar_alt = true;
-                    target_sonar_alt = constrain_float(sonar_alt, 150, 800);
+                    target_sonar_alt = sonar_alt;
                 } else {
                     flag_reset_target_sonar_alt = false;
                 }
@@ -707,17 +708,26 @@ void Copter::save_add_waypoint()
 
         // add or replace command
         if(mission.num_commands() == 4) {
-            mission.replace_cmd(3,cmd);
-            // log event
-            Log_Write_Event(DATA_SAVEWP_ADD_WP);
-
+            if(mission.replace_cmd(3,cmd)) {
+                // log event
+                Log_Write_Event(DATA_SAVEWP_ADD_WP);
+                AP_Notify::flags.succeed_save_wp = 1;
+                // logging when adding new command
+                if (should_log(MASK_LOG_CMD)) {
+                    DataFlash.Log_Write_Mission_Cmd(mission, cmd);
+                }
+            }
         } else {
             if (mission.add_cmd(cmd)) {
                 // log event
                 Log_Write_Event(DATA_SAVEWP_ADD_WP);
+                AP_Notify::flags.succeed_save_wp = 1;
+                // logging when adding new command
+                if (should_log(MASK_LOG_CMD)) {
+                DataFlash.Log_Write_Mission_Cmd(mission, cmd);
+                }
             }
         }
-    AP_Notify::flags.succeed_save_wp = 1;
     return;
 }
 
@@ -773,6 +783,10 @@ void Copter::clear_and_save_waypoint()
     if (mission.add_cmd(cmd)) {
         Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);
         AP_Notify::flags.succeed_save_wp = 2;
+        // logging when adding new command
+        if (should_log(MASK_LOG_CMD)) {
+        DataFlash.Log_Write_Mission_Cmd(mission, cmd);
+        }
     } 
     return;
 }
