@@ -255,7 +255,7 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
     // flag to reset target sonar altitude when rangefinder switch on
     if (!flag_reset_target_sonar_alt) {
         if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
-            target_sonar_alt = constrain_float(sonar_alt, 100, 800);
+            target_sonar_alt = sonar_alt;
             flag_reset_target_sonar_alt = true;
         }
 
@@ -281,7 +281,7 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
             velocity_correction = distance_error * g.sonar_gain_down;
         }
         
-        velocity_correction = constrain_float(velocity_correction, -THR_SURFACE_TRACKING_VELZ_MAX, THR_SURFACE_TRACKING_VELZ_MAX);
+        velocity_correction = constrain_float(velocity_correction, -THR_SURFACE_TRACKING_DOWN_VELZ_MAX, THR_SURFACE_TRACKING_UP_VELZ_MAX);
     }
     else {
         velocity_correction = 0;
