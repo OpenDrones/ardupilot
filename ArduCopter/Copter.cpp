@@ -72,6 +72,7 @@ Copter::Copter(void) :
 #endif
     climb_rate(0),
     sonar_alt(0),
+    sonar_alt_ok_last(0),
     sonar_alt_health(0),
     target_sonar_alt(0.0f),
     baro_alt(0),

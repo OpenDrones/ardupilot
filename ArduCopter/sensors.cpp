@@ -46,13 +46,30 @@ int16_t Copter::read_sonar(void)
     }
 
     int16_t temp_alt = sonar.distance_cm();
+    static uint32_t last_call_ms;
 
     if (temp_alt >= sonar.min_distance_cm() && 
         temp_alt <= sonar.max_distance_cm() * SONAR_RELIABLE_DISTANCE_PCT) {
-        if ( sonar_alt_health < SONAR_ALT_HEALTH_MAX ) {
+        if ((temp_alt > sonar_alt_ok_last - 2*g.pilot_velocity_z_max*0.1) && (temp_alt <sonar_alt_ok_last + 2*g.pilot_velocity_z_max*0.1)) {
+            sonar_alt_ok_last = temp_alt;
+            if ( sonar_alt_health < SONAR_ALT_HEALTH_MAX ) {
             sonar_alt_health++;
+            }
+        } else {
+            if (sonar_alt_health > 0) {
+                sonar_alt_health--;
+            }
+            if ((temp_alt < sonar_alt - 2*g.pilot_velocity_z_max*0.1) || (temp_alt > sonar_alt + 2*g.pilot_velocity_z_max*0.1)) {
+                // reset timer
+                last_call_ms = millis();
+            }
+            if (millis() - last_call_ms > 300) {
+                sonar_alt_ok_last = temp_alt;
+            } else {
+                sonar_alt_ok_last += climb_rate*0.1;
+            }
         }
-    }else{
+    } else {
         sonar_alt_health = 0;
     }
 
