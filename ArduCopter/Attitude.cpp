@@ -276,11 +276,7 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
         // calc desired velocity correction from target sonar alt vs actual sonar alt (remove the error already passed to Altitude controller to avoid oscillations)
         distance_error = (target_sonar_alt - sonar_alt) - (current_alt_target - current_alt);
         if (sonar_alt < target_sonar_alt) {
-            if (sonar_alt < 0.6) {
-                velocity_correction = 2.0 * distance_error * g.sonar_gain_up;
-            } else {
                 velocity_correction = distance_error * g.sonar_gain_up;
-            }
         } else {
             velocity_correction = distance_error * g.sonar_gain_down;
         }
