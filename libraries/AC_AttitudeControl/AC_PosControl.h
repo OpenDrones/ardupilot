@@ -44,6 +44,7 @@
 #define POSCONTROL_JERK_RATIO                   1.0f    // Defines the time it takes to reach the requested acceleration
 
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
+// #define POSCONTROL_ACCEL_Z_MAX_CM               300.0f
 
 class AC_PosControl
 {
@@ -364,7 +365,7 @@ private:
 
     // parameters
     AP_Float    _accel_xy_filt_hz;      // XY acceleration filter cutoff frequency
-
+    // AP_Float    _accel_z_max_meas;        // max Z accel measured
     // internal variables
     float       _dt;                    // time difference (in seconds) between calls from the main program
     float       _dt_xy;                 // time difference (in seconds) between update_xy_controller and update_vel_controller_xyz calls

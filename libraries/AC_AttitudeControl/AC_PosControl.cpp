@@ -17,6 +17,15 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("_ACC_XY_FILT", 1, AC_PosControl, _accel_xy_filt_hz, POSCONTROL_ACCEL_FILTER_HZ),
 
+    // @Param: _ACC_Z_MAX
+    // @DisplayName: max Z Acceleration
+    // @Description: Lower values will slow the response of motor throttle
+    // @Units: 
+    // @Range: 100 400
+    // @Increment: 1
+    // @User: Advanced
+    // AP_GROUPINFO("_ACC_Z_MAX", 2, AC_PosControl, _accel_z_max_meas, POSCONTROL_ACCEL_Z_MAX_CM),
+
     AP_GROUPEND
 };
 
@@ -449,6 +458,7 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
 
     // Calculate Earth Frame Z acceleration
     z_accel_meas = -(_ahrs.get_accel_ef_blended().z + GRAVITY_MSS) * 100.0f;
+    // z_accel_meas = constrain_float(z_accel_meas, -_accel_z_max_meas, _accel_z_max_meas);
 
     // reset target altitude if this controller has just been engaged
     if (_flags.reset_accel_to_throttle) {
@@ -458,6 +468,7 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
     } else {
         // calculate accel error
         _accel_error.z = accel_target_z - z_accel_meas;
+        // _accel_error.z = constrain_float(_accel_error.z, -2*_accel_z_max_meas, 2*_accel_z_max_meas);
     }
 
     // set input to PID
