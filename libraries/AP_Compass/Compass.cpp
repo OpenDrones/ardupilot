@@ -272,7 +272,7 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @Units: Radians
     // @Increment: 0.01
     // @User: Standard
-    AP_GROUPINFO("MNT_ANGLE",    24, Compass, _compass_mount_angle, 0),
+    AP_GROUPINFO("MNT_ANG",    24, Compass, _compass_mount_angle, 0),
 
     AP_GROUPEND
 };
