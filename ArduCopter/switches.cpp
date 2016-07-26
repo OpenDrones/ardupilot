@@ -46,12 +46,10 @@ void Copter::read_control_switch()
         // set flight mode and simple mode setting
         if (set_mode(flight_modes[switch_position])) {
             // play a tone
-            if (control_switch_state.debounced_switch_position != -1) {
                 // alert user to mode change failure (except if autopilot is just starting up)
                 if (ap.initialised) {
                     AP_Notify::events.user_mode_change = 1;
                 }
-            }
 
             if(!check_if_auxsw_mode_used(AUXSW_SIMPLE_MODE) && !check_if_auxsw_mode_used(AUXSW_SUPERSIMPLE_MODE)) {
                 // if none of the Aux Switches are set to Simple or Super Simple Mode then
@@ -281,7 +279,13 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         case AUXSW_RTL:
             if (ch_flag == AUX_SWITCH_HIGH) {
                 // engage RTL (if not possible we remain in current flight mode)
-                set_mode(RTL);
+                if(set_mode(RTL)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
             }else{
                 // return to flight mode switch's flight mode if we are currently in RTL
                 if (control_mode == RTL) {
@@ -457,7 +461,13 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 
         case AUXSW_AUTO:
             if (ch_flag == AUX_SWITCH_HIGH) {
-                set_mode(AUTO);
+                if(set_mode(AUTO)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
             }else{
                 // return to flight mode switch's flight mode if we are currently in AUTO
                 if (control_mode == AUTO) {
@@ -487,7 +497,13 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 
         case AUXSW_LAND:
             if (ch_flag == AUX_SWITCH_HIGH) {
-                set_mode(LAND);
+                if(set_mode(LAND)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
             }else{
                 // return to flight mode switch's flight mode if we are currently in LAND
                 if (control_mode == LAND) {
@@ -606,8 +622,14 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         case AUXSW_BRAKE:
             // brake flight mode
             if (ch_flag == AUX_SWITCH_HIGH) {
-                set_mode(BRAKE);
-            }else{
+                if(set_mode(BRAKE)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
+            } else {
                 // return to flight mode switch's flight mode if we are currently in BRAKE
                 if (control_mode == BRAKE) {
                     reset_control_switch();
@@ -619,8 +641,14 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         case AUXSW_CRUISE:
             // cruise flight mode
             if (ch_flag == AUX_SWITCH_HIGH) {
-                   set_mode(CRUISE);
-            }else{
+                   if(set_mode(CRUISE)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
+            } else {
                 // return to flight mode switch's flight mode if we are currently in CRUISE
                 if (control_mode == CRUISE) {
                     reset_control_switch();
@@ -633,8 +661,14 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         case AUXSW_WPCRUISE:
             // cruise flight mode
             if (ch_flag == AUX_SWITCH_HIGH) {
-                   set_mode(WPCRUISE);
-            }else{
+                   if(set_mode(WPCRUISE)) {
+                    // alert user to mode change
+                    AP_Notify::events.user_mode_change = 1;
+                } else {
+                    // alert user to mode change failure
+                    AP_Notify::events.user_mode_change_failed = 1;
+                }
+            } else {
                 // return to flight mode switch's flight mode if we are currently in WAYPOINT CRUISE
                 if (control_mode == WPCRUISE) {
                     reset_control_switch();
