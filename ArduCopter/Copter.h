@@ -383,6 +383,7 @@ private:
     int16_t climb_rate;
     // The altitude as reported by Sonar in cm, filter processed - Values are 20 to 700 generally.
     int16_t sonar_alt;
+    int16_t sonar_alt_ok_last;   // healthy sonar altitude at last time
     uint8_t sonar_alt_health;    // true if we can trust the altitude from the sonar
     float target_sonar_alt;      // desired altitude in cm above the ground
     int32_t baro_alt;            // barometer altitude in cm above home
@@ -731,7 +732,6 @@ private:
     void circle_run();
     bool cruise_init();
     void cruise_run();
-    void init_cruise_target();
     void update_cruise_des(Vector3f&);
     bool reach_cruise_des(Vector3f&);
     bool wpcruise_init();

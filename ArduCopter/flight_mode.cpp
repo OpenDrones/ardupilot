@@ -261,11 +261,6 @@ void Copter::exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
     }
 
 #if WPCRUISE_ENABLED == ENABLED
-    // disable sprayer when changing into WPCRUISE flight mode
-    if (new_control_mode == WPCRUISE)
-    {
-        sprayer.enable(false);
-    }
     // save break point when we leave wpcruise mode
     if (old_control_mode == WPCRUISE && (WpCruise_state == Waypoint_Nav || WpCruise_state == Wpcruise_loiter)) {
         mission.truncate_counter_one();

@@ -172,8 +172,12 @@
  # define SONAR_GAIN_DEFAULT 0.8f           // gain for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
 #endif
 
-#ifndef THR_SURFACE_TRACKING_VELZ_MAX
- # define THR_SURFACE_TRACKING_VELZ_MAX 150 // max vertical speed change while surface tracking with sonar
+#ifndef THR_SURFACE_TRACKING_UP_VELZ_MAX
+ # define THR_SURFACE_TRACKING_UP_VELZ_MAX 150 // max vertical speed change up while surface tracking with sonar
+#endif
+
+#ifndef THR_SURFACE_TRACKING_DOWN_VELZ_MAX
+ # define THR_SURFACE_TRACKING_DOWN_VELZ_MAX 100 // max vertical speed change down while surface tracking with sonar
 #endif
 
 #ifndef SONAR_TIMEOUT_MS

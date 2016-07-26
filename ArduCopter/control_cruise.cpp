@@ -4,13 +4,13 @@
 
 #if CRUISE_ENABLED == ENABLED
 
-#define CRUISE_CURR_SPEED_MIN_DEFAULT       50.0f     // speed threshold to judge cruise forward or back
-#define CRUISE_DESTINATION_DISTANCE_CM      5000.0f    // distance to calc next cruise destination
+#define CRUISE_CURR_SPEED_MIN_DEFAULT       50.0f       // speed threshold to judge cruise forward or back
+#define CRUISE_DESTINATION_DISTANCE_CM      5000.0f     // distance to calc next cruise destination
 #define DISTANCE_TO_CALC_NEXT_CRUISE_DES_CM 1000.0f     // min distance to judge need to calc next cruise distination
+#define PITCH_IN_SET_CRUISE_DIRECTION_THRESHOLD 0.5f
 
 static struct {
     bool flag_reach_cruise_des;
-    bool flag_reach_cruise_des_old;
     bool flag_init_cruise_des;
      // get current bearing when changing into cruise mode
     float cos_bearing, sin_bearing;
@@ -31,7 +31,9 @@ bool Copter::cruise_init()
         pos_control.set_target_to_stopping_point_xy();
         pos_control.set_target_to_stopping_point_z();
 
-        init_cruise_target();
+        // init cruise flags
+        cruise.flag_init_cruise_des = true;
+        cruise.flag_reach_cruise_des = false;
         return true;
     }else{
         return false;
@@ -91,60 +93,58 @@ void Copter::cruise_run()
         attitude_control.set_throttle_out_unstabilized(get_throttle_pre_takeoff(channel_throttle->control_in),true,g.throttle_filt);
         pos_control.relax_alt_hold_controllers(get_throttle_pre_takeoff(channel_throttle->control_in)-throttle_average);
         return;
-    }else{
+    } else {
+        // calc cruise direction forward or backward
+        if (cruise.flag_init_cruise_des) {
+            // get pilot desired lean angles
+            float target_roll, target_pitch;
+            get_pilot_desired_lean_angles(channel_roll->control_in, channel_pitch->control_in, target_roll, target_pitch);
+            // calc direction according to pilot inputs 
+            if (target_pitch > aparm.angle_max * PITCH_IN_SET_CRUISE_DIRECTION_THRESHOLD) {
+                cruise.cos_bearing = -ahrs.cos_yaw();
+                cruise.sin_bearing = -ahrs.sin_yaw();
+            } else if (target_pitch < -aparm.angle_max * PITCH_IN_SET_CRUISE_DIRECTION_THRESHOLD) {
+                    cruise.cos_bearing = ahrs.cos_yaw();
+                    cruise.sin_bearing = ahrs.sin_yaw();
+                } else {
+                    // run loiter controller
+                    wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+                    // update altitude target and call position controller
+                    pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+
+                    // call attitude controller
+                    attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
+                    // call z-axis position controller
+                    pos_control.update_z_controller();
+                    return;
+                }
+        }
         // calc next cruise destination
-        if (cruise.flag_init_cruise_des || (cruise.flag_reach_cruise_des && !cruise.flag_reach_cruise_des_old))
-        {
+        if (cruise.flag_init_cruise_des || cruise.flag_reach_cruise_des) {
+            // calc next cruise destination
             update_cruise_des(cruise.destination);
             // set destination
-            if (g.sonar_alt_wp != 0 && sonar_enabled) {
-                wp_nav.set_wp_xy_origin_and_destination(cruise.destination);
-            } else {
-                    wp_nav.set_wp_destination(cruise.destination);
-                }
+            wp_nav.set_wp_xy_origin_and_destination(cruise.destination);
+            
             cruise.flag_init_cruise_des = false;
         }
-        cruise.flag_reach_cruise_des_old = cruise.flag_reach_cruise_des;
+        // calc flag to reach next cruise destination
         cruise.flag_reach_cruise_des = reach_cruise_des(cruise.destination);
 
         // run waypoint controller
-        if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
-            wp_nav.update_wpnav();
-        } else {
-            wp_nav.update_wpnav_xy();
-                // altitude control according to sonar
-                if (sonar_enabled) {
-                    // if sonar is ok, use surface tracking
-                    target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
-                }
-                // update altitude target and call position controller
-                pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
-            }    
+        wp_nav.update_wpnav_xy();
+        // altitude control according to sonar
+        if (sonar_enabled) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);   
         // call z-axis position controller
         pos_control.update_z_controller();
         // roll & pitch from waypoint controller, yaw rate from pilot
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
     }
-}
-
-// calc initial cruise velocity in body-frame
-void Copter::init_cruise_target()
-{
-    float vel_fwd;
-    const Vector3f& curr_vel = inertial_nav.get_velocity();
-    // convert inertial nav earth-frame velocities_cm/s to body-frame
-    vel_fwd = curr_vel.x*ahrs.cos_yaw() + curr_vel.y*ahrs.sin_yaw();
-    // init cruise speed direction
-    if (vel_fwd < -CRUISE_CURR_SPEED_MIN_DEFAULT) {
-        cruise.cos_bearing = -ahrs.cos_yaw();
-        cruise.sin_bearing = -ahrs.sin_yaw();
-    } else {
-        cruise.cos_bearing = ahrs.cos_yaw();
-        cruise.sin_bearing = ahrs.sin_yaw();
-        }
-    cruise.flag_reach_cruise_des = false;
-    cruise.flag_reach_cruise_des_old = false;
-    cruise.flag_init_cruise_des = true;
 }
 
 // update cruise destination

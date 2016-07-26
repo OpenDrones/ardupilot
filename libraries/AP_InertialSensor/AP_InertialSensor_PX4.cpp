@@ -67,11 +67,11 @@ bool AP_InertialSensor_PX4::_init_sensor(void)
 {
     // assumes max 3 instances
     _accel_fd[0] = open(ACCEL_BASE_DEVICE_PATH "0", O_RDONLY);
-    _accel_fd[1] = open(ACCEL_BASE_DEVICE_PATH "1", O_RDONLY);
-    _accel_fd[2] = open(ACCEL_BASE_DEVICE_PATH "2", O_RDONLY);
+    _accel_fd[1] = open(ACCEL_BASE_DEVICE_PATH "2", O_RDONLY);
+    _accel_fd[2] = open(ACCEL_BASE_DEVICE_PATH "1", O_RDONLY);
     _gyro_fd[0] = open(GYRO_BASE_DEVICE_PATH "0", O_RDONLY);
-    _gyro_fd[1] = open(GYRO_BASE_DEVICE_PATH "1", O_RDONLY);
-    _gyro_fd[2] = open(GYRO_BASE_DEVICE_PATH "2", O_RDONLY);
+    _gyro_fd[1] = open(GYRO_BASE_DEVICE_PATH "2", O_RDONLY);
+    _gyro_fd[2] = open(GYRO_BASE_DEVICE_PATH "1", O_RDONLY);
 
     _num_accel_instances = 0;
     _num_gyro_instances = 0;

@@ -8,7 +8,6 @@
 
 static struct {
     // flag to set destination
-    uint8_t flag_reach_destination_old          : 1;               // old flag of reaching destination
     uint8_t flag_init_destination               : 1;                    // flag to initialize first destination when changing into WPCRUISE
     
 } wpcruise;
@@ -29,19 +28,17 @@ bool Copter::wpcruise_init()
         // set the waypoint as "fast"
         wp_nav.set_fast_waypoint(true);
 
-        // init old flag
-        wpcruise.flag_reach_destination_old = true;
-
         if (mission.num_commands() == 2) {
             // return to breakpoint and loiter in mannual flight mode
             WpCruise_state = Return_Bp_Loiter;
+            sprayer.enable(false);
          } else if (mission.num_commands() == 3) {
                 // breakpoint don't exist, start AB cruise directly
                 WpCruise_state = Waypoint_Nav;
-                // enable sprayer
             }  else {
                 // breakpoint exist in WpCruise mode, return to breakpoint first and then continue AB cruise
                 WpCruise_state = Return_Bp_Wp_Nav;
+                sprayer.enable(false);
             }
         
         // set flag to init first destination
@@ -128,7 +125,7 @@ void Copter::wpcruise_run()
             }
 
             // calc destination position step by step
-            if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && (!wpcruise.flag_reach_destination_old) && WpCruise_state != Return_Bp_Loiter))
+            if (wpcruise.flag_init_destination || (wp_nav.reached_wp_destination() && WpCruise_state != Return_Bp_Loiter))
             {
                 Vector3f destination;
                 switch(WpCruise_state) {
@@ -146,39 +143,34 @@ void Copter::wpcruise_run()
                     
                     // update waypoint nav destination
                     case Waypoint_Nav:
-                    if (mission.num_commands() == 4)
-                    {
+                    if (mission.num_commands() == 4) {
                         mission.truncate(3);
                     }
                     update_waypoint_destination(destination);
                     // enable sprayer
                     sprayer.enable(true);
                     break;
-                    
                     default:
                     // do nothing
                     break;
                 }
                 if (WpCruise_state != Wpcruise_loiter) {
                     // set destination
-                    if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                    if (g.sonar_alt_wp != 0) {
                         wp_nav.set_wp_xy_origin_and_destination(destination);
-                        target_sonar_alt = destination.z;
+                        if (sonar_enabled) {
+                            target_sonar_alt = destination.z;
+                        }
                     }
                     else {
                         wp_nav.set_wp_destination(destination);
                     }
                 }
-
                 wpcruise.flag_init_destination = false;
             }
-            // calc flag to reach destination
-            wpcruise.flag_reach_destination_old = wp_nav.reached_wp_destination();
             // loiter and disable sprayer when flow break
-            if (WpCruise_state != Wpcruise_loiter && (sprayer.get_drain_off() || failsafe.battery))
-            {
-                if (WpCruise_state == Waypoint_Nav)
-                {
+            if (WpCruise_state != Wpcruise_loiter && (sprayer.get_drain_off() || failsafe.battery)) {
+                if (WpCruise_state == Waypoint_Nav) {
                     // save current waypoint position and disable sprayer
                     save_add_waypoint();
                     sprayer.enable(false);
@@ -191,14 +183,14 @@ void Copter::wpcruise_run()
                 pos_control.get_stopping_point_z(destination);
                 
                 // set destination
-                if (g.sonar_alt_wp != 0 && sonar_enabled) {
+                if (g.sonar_alt_wp != 0) {
                     wp_nav.set_wp_xy_origin_and_destination(destination);
                 } else {
                         wp_nav.set_wp_destination(destination);
                     }
             }
             // run waypoint controller
-            if (g.sonar_alt_wp == 0  || (!sonar_enabled)) {
+            if (g.sonar_alt_wp == 0) {
                 wp_nav.update_wpnav();
             } else {
                 wp_nav.update_wpnav_xy();
