@@ -281,6 +281,9 @@ private:
     // declination in radians
     AP_Float    _declination;
 
+    // mount error angle of compass
+    AP_Float    _compass_mount_angle;
+
     // enable automatic declination code
     AP_Int8     _auto_declination;                  
 

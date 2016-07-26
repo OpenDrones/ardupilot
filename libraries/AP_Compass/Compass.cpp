@@ -265,6 +265,15 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     AP_GROUPINFO("EXTERN3",23, Compass, _state[2].external, 0),
 #endif
 
+    // @Param: MNT_ANGLE
+    // @DisplayName: Compass mount error angle
+    // @Description: An angle to compensate between the chip and mount
+    // @Range: -3.142 3.142
+    // @Units: Radians
+    // @Increment: 0.01
+    // @User: Standard
+    AP_GROUPINFO("MNT_ANG",24, Compass, _compass_mount_angle, 0),
+
     AP_GROUPEND
 };
 
@@ -483,7 +492,7 @@ Compass::set_declination(float radians, bool save_to_eeprom)
 float
 Compass::get_declination() const
 {
-    return _declination.get();
+    return _compass_mount_angle + _declination.get();
 }
 
 /*
@@ -509,7 +518,7 @@ Compass::calculate_heading(const Matrix3f &dcm_matrix) const
     // Declination correction (if supplied)
     if( fabsf(_declination) > 0.0f )
     {
-        heading = heading + _declination;
+        heading = heading + _declination + _compass_mount_angle;
         if (heading > PI)    // Angle normalization (-180 deg, 180 deg)
             heading -= (2.0f * PI);
         else if (heading < -PI)
