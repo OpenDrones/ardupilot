@@ -64,6 +64,11 @@ void Copter::loiter_run()
         wp_nav.clear_pilot_desired_acceleration();
     }
 
+    // relax loiter target during takeoff
+    if (takeoff_state.running) {
+        wp_nav.loiter_soften_for_landing();
+    }
+    
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
         wp_nav.loiter_soften_for_landing();
