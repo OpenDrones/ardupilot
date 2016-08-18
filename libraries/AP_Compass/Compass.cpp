@@ -516,7 +516,7 @@ Compass::calculate_heading(const Matrix3f &dcm_matrix) const
     float heading = constrain_float(atan2f(-headY,headX), -3.15f, 3.15f);
 
     // Declination correction (if supplied)
-    if( fabsf(_declination) > 0.0f )
+    if( fabsf(_declination + _compass_mount_angle) > 0.0f )
     {
         heading = heading + _declination + _compass_mount_angle;
         if (heading > PI)    // Angle normalization (-180 deg, 180 deg)
