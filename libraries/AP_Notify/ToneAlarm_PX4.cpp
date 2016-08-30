@@ -51,16 +51,21 @@ const ToneAlarm_PX4::Tone ToneAlarm_PX4::_tones[] {
     { "MFT100L4>G#6A#6B#4", false },
     #define AP_NOTIFY_PX4_TONE_QUIET_READY_OR_FINISHED 7
     { "MFT200L4<G#6A#6B#4", false },
+    // 1-0-1-0-1-0
     #define AP_NOTIFY_PX4_TONE_LOUD_ATTENTION_NEEDED 8
     { "MFT100L4>B#B#B#B#", false },
+    // 1-1-1-1-1-1-...3 seconds
     #define AP_NOTIFY_PX4_TONE_QUIET_ARMING_WARNING 9
     { "MNT75L1O2G", false },
     #define AP_NOTIFY_PX4_TONE_LOUD_WP_COMPLETE 10
     { "MFT200L8G>C3", false },
+    // 1-1-1-0-1-1-1-0-1-1-1-0-1-1-1-0-1-...
     #define AP_NOTIFY_PX4_TONE_LOUD_LAND_WARNING_CTS 11
     { "MBT200L2A-G-A-G-A-G-", true },
+    // 1-1-0-0-1-1-0-0-1-1-0-0-...
     #define AP_NOTIFY_PX4_TONE_LOUD_VEHICLE_LOST_CTS 12
     { "MBT200>B#1", true },
+    // 1-0-1-0-1-0-1...
     #define AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS 13
     { "MBNT255>B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8B#8", true },
 };
@@ -246,7 +251,7 @@ void ToneAlarm_PX4::update()
         flags.failsafe_ekf = AP_Notify::flags.ekf_bad;
         if (flags.failsafe_ekf) {
             // ekf warning tune
-            play_tone(AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS);
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_VEHICLE_LOST_CTS);
         }
     }
 
@@ -255,7 +260,7 @@ void ToneAlarm_PX4::update()
         flags.drain_off = AP_Notify::flags.drain_off;
         if (flags.drain_off) {
             // drain off warning tune
-            play_tone(AP_NOTIFY_PX4_TONE_LOUD_BATTERY_ALERT_CTS);
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_LAND_WARNING_CTS);
         }
     }
 
