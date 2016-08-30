@@ -288,6 +288,12 @@ enum Wpcruisestate {
 #define MASK_LOG_IMU_RAW                (1UL<<19)
 #define MASK_LOG_ANY                    0xFFFF
 
+// BITMASK - notify (to be added)
+#define MASK_NOTIFY_ALWAYS              (1<<0)
+#define MASK_NOTIFY_BATT                (1<<1)
+#define MASK_NOTIFY_EKF                 (1<<2)
+#define MASK_NOTIFY_DRAINOFF            (1<<3)
+
 // DATA - event logging
 #define DATA_MAVLINK_FLOAT                  1
 #define DATA_MAVLINK_INT32                  2

@@ -105,6 +105,7 @@ public:
 
         // Use rangefinder or not to in auto flight mode
         k_param_sonar_alt_wp,
+        
         k_param_ch8_option,
         k_param_arming_check,
         k_param_sprayer,
@@ -147,7 +148,8 @@ public:
         k_param_altitude_limit,         // deprecated - remove
         k_param_fence,
         k_param_gps_glitch,             // deprecated
-        k_param_baro_glitch,            // 71 - deprecated
+
+        k_param_notify_bitmask,         // 71
 
         //
         // 75: Singlecopter, CoaxCopter
@@ -423,6 +425,7 @@ public:
     // Misc
     //
     AP_Int32        log_bitmask;
+    AP_Int16        notify_bitmask;
     AP_Int8         esc_calibrate;
     AP_Int8         radio_tuning;
     AP_Int16        radio_tuning_high;

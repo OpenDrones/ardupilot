@@ -85,7 +85,9 @@ void Copter::set_failsafe_radio(bool b)
 void Copter::set_failsafe_battery(bool b)
 {
     failsafe.battery = b;
-    AP_Notify::flags.failsafe_battery = b;
+    if (g.notify_bitmask & MASK_NOTIFY_BATT) {
+        AP_Notify::flags.failsafe_battery = b;
+    }
 }
 
 // ---------------------------------------------
