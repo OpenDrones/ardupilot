@@ -168,8 +168,12 @@
  # define SONAR_RELIABLE_DISTANCE_PCT 0.60f // we trust the sonar out to 60% of it's maximum range
 #endif
 
-#ifndef SONAR_GAIN_DEFAULT
- # define SONAR_GAIN_DEFAULT 0.8f           // gain for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
+#ifndef SONAR_GAIN_UP_DEFAULT
+ # define SONAR_GAIN_UP_DEFAULT 1.2f           // gain up for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
+#endif
+
+#ifndef SONAR_GAIN_DOWN_DEFAULT
+ # define SONAR_GAIN_DOWN_DEFAULT 0.3f           // gain down for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef THR_SURFACE_TRACKING_UP_VELZ_MAX

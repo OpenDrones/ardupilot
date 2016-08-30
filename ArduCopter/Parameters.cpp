@@ -134,7 +134,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Range: 0.01 2.0
     // @Increment: 0.01
     // @User: Standard
-    GSCALAR(sonar_gain_up,     "RNGFND_GAIN_UP",           SONAR_GAIN_DEFAULT),
+    GSCALAR(sonar_gain_up,     "RNGFND_GAIN_UP",           SONAR_GAIN_UP_DEFAULT),
 
     // @Param: RNGFND_GAIN_DOWN
     // @DisplayName: Rangefinder gain down
@@ -142,7 +142,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Range: 0.01 2.0
     // @Increment: 0.01
     // @User: Standard
-    GSCALAR(sonar_gain_down,     "RNGFND_GAIN_DOWN",           SONAR_GAIN_DEFAULT),
+    GSCALAR(sonar_gain_down,     "RNGFND_GAIN_DOWN",           SONAR_GAIN_DOWN_DEFAULT),
 
     // @Param: RNGFND_WAYPOINT
     // @DisplayName: Rangefinder WP
