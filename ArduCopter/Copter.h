@@ -732,7 +732,8 @@ private:
     void circle_run();
     bool cruise_init();
     void cruise_run();
-    void update_cruise_des(Vector3f&);
+    void update_cruise_des_fwd(float, Vector3f&);
+    void update_cruise_des_rgt(float, Vector3f&);
     bool reach_cruise_des(Vector3f&);
     bool wpcruise_init();
     void wpcruise_run();
