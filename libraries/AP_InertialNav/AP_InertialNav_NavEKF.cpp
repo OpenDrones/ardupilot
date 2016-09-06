@@ -19,7 +19,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units:
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C0", 0, AP_InertialNav_NavEKF, _alt_corr_fac_a, 5),
+    AP_GROUPINFO("ALT_C0", 0, AP_InertialNav_NavEKF, _alt_corr_fac_a, 3),
 
     // @Param: ALT_CORR_FAC1
     // @DisplayName: 
@@ -27,7 +27,23 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: 
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C1", 1, AP_InertialNav_NavEKF, _alt_corr_fac_b, 15),
+    AP_GROUPINFO("ALT_C1", 1, AP_InertialNav_NavEKF, _alt_corr_fac_b, 6),
+
+    // @Param: ALT_CORR_FAC0FW
+    // @DisplayName: 
+    // @Description: altitude correction factor a if flying to front
+    // @Units:
+    // @Range:
+    // @Increment: 1
+    AP_GROUPINFO("ALT_C0FW", 2, AP_InertialNav_NavEKF, _alt_corr_fac_af, 5),
+
+    // @Param: ALT_CORR_FAC1FW
+    // @DisplayName: 
+    // @Description: altitude correction factor b if flying to front
+    // @Units: 
+    // @Range:
+    // @Increment: 1
+    AP_GROUPINFO("ALT_C1FW", 3, AP_InertialNav_NavEKF, _alt_corr_fac_bf, 10),
 
     // @Param: ALT_CORR_MAX
     // @DisplayName: 
@@ -35,7 +51,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: cm
     // @Range: 
     // @Increment: 1
-    AP_GROUPINFO("ALT_CMAX", 2, AP_InertialNav_NavEKF, _alt_corr_max, 0),
+    AP_GROUPINFO("ALT_CMAX", 4, AP_InertialNav_NavEKF, _alt_corr_max, 100),
 
     // @Param: ALT_C_FF
     // @DisplayName: 
@@ -43,7 +59,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: hz
     // @Range: 
     // @Increment: 1
-    AP_GROUPINFO("ALT_C_FF", 3, AP_InertialNav_NavEKF, _alt_corr_ffreq, 10),
+    AP_GROUPINFO("ALT_C_FF", 5, AP_InertialNav_NavEKF, _alt_corr_ffreq, 10),
 
     // @Param: ALT_C_VFF
     // @DisplayName: 
@@ -51,7 +67,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: hz
     // @Range: 
     // @Increment: 
-    AP_GROUPINFO("ALT_C_VFF", 4, AP_InertialNav_NavEKF, _alt_c_vel_ffreq, 20),
+    AP_GROUPINFO("ALT_C_VFF", 6, AP_InertialNav_NavEKF, _alt_c_vel_ffreq, 20),
     
     AP_GROUPEND
 };
@@ -218,16 +234,27 @@ float AP_InertialNav_NavEKF::get_velocity_z() const
 float AP_InertialNav_NavEKF::calc_alt_corretion(float dt)
 {
     float alt_corretion;
-    float velocity;
-    // calculate velocity in m/s
+    float velocity,vel_fwd;
+    bool flag_front;
+    // fetch velocity in cm/s
     velocity = pythagorous2(_velocity_cm.x,_velocity_cm.y);
+    
+    // convert inertial nav earth-frame velocities_cm/s to body-frame
+    vel_fwd = _velocity_cm.x*_ahrs_ekf.cos_yaw() + _velocity_cm.y*_ahrs_ekf.sin_yaw();
+    flag_front = (vel_fwd >= velocity*0.6);
+    
+    // calculate velocity in m/s
     velocity /= 100;
     // lowpassfilter of current speed
     _alt_c_vel_filter.set_cutoff_frequency(_alt_c_vel_ffreq/100.0);
     velocity = _alt_c_vel_filter.apply(velocity,dt);
 
     // calculate alt correction according to velocity
-    alt_corretion = _alt_corr_fac_a*velocity*velocity + _alt_corr_fac_b*velocity;
+    if (flag_front) {
+        alt_corretion = _alt_corr_fac_af*velocity*velocity + _alt_corr_fac_bf*velocity;
+    } else {
+        alt_corretion = _alt_corr_fac_a*velocity*velocity + _alt_corr_fac_b*velocity;
+    }
 
     // calculate alt correction filter
     _alt_corr_filter.set_cutoff_frequency(_alt_corr_ffreq/100.0);

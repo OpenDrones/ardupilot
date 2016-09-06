@@ -129,6 +129,8 @@ private:
     // parameters to calculate altitude correction
     AP_Int8 _alt_corr_fac_a;
     AP_Int8 _alt_corr_fac_b;
+    AP_Int8 _alt_corr_fac_af;
+    AP_Int8 _alt_corr_fac_bf;
     AP_Int16 _alt_corr_max;
     AP_Float _alt_corr_ffreq;               // alt correction lowpass filter frequency
     AP_Float _alt_c_vel_ffreq;               // velocity lowpass filter frequency
