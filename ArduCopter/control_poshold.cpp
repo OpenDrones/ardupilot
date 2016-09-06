@@ -182,6 +182,8 @@ void Copter::poshold_run()
     // relax loiter target during takeoff
     if (takeoff_state.running) {
         wp_nav.loiter_soften_for_landing();
+        // set flag to recalc target sonar altitude during take-off
+        flag_reset_target_sonar_alt = true;
     }
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
