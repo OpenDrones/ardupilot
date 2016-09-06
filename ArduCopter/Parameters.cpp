@@ -150,7 +150,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Range: 0  1
     // @Increment: 1
     // @User: Standard
-    GSCALAR(sonar_alt_wp,     "RNGFND_WP",           0),
+    GSCALAR(sonar_alt_wp,     "RNGFND_WP",           1),
 
     // @Param: FS_BATT_ENABLE
     // @DisplayName: Battery Failsafe Enable
