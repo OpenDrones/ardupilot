@@ -735,11 +735,6 @@ void Copter::save_add_waypoint()
     cmd.content.location = current_loc;
     cmd.id = MAV_CMD_NAV_WAYPOINT;
 
-    // if altitude control with sonar in auto mode, recalculate target altitude
-    if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        cmd.content.location.alt = target_sonar_alt;
-    }
-
         // add or replace command
         if(mission.num_commands() == 4) {
             if(mission.replace_cmd(3,cmd)) {
@@ -808,11 +803,6 @@ void Copter::clear_and_save_waypoint()
     // set new waypoint to current location
     cmd.content.location = current_loc;
     cmd.id = MAV_CMD_NAV_WAYPOINT;
-
-    // if altitude control with sonar in auto mode, recalculate target altitude
-    if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        cmd.content.location.alt = target_sonar_alt;
-    }
 
     if (mission.add_cmd(cmd)) {
         Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);

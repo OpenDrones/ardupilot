@@ -158,9 +158,6 @@ void Copter::wpcruise_run()
                     // set destination
                     if (g.sonar_alt_wp != 0) {
                         wp_nav.set_wp_xy_origin_and_destination(destination);
-                        if (sonar_enabled) {
-                            target_sonar_alt = destination.z;
-                        }
                     }
                     else {
                         wp_nav.set_wp_destination(destination);
@@ -216,14 +213,9 @@ void Copter::calc_breakpoint_destination(Vector3f& destination)
 {
     // read break point from storage
     AP_Mission::Mission_Command cmd;
-    if (mission.read_cmd_from_storage((mission.num_commands()-1), cmd))
-    {
+    if (mission.read_cmd_from_storage((mission.num_commands()-1), cmd)) {
         const Vector3f &curr_pos = inertial_nav.get_position();
         destination = pv_location_to_vector_with_default(cmd.content.location, curr_pos);
-
-        if (g.sonar_alt_wp != 0 && sonar_enabled) {
-            destination.z = max(1.0, cmd.content.location.alt);
-        }
     }
 }
  void Copter::update_waypoint_destination(Vector3f& destination)
@@ -233,9 +225,5 @@ void Copter::calc_breakpoint_destination(Vector3f& destination)
 
     const Vector3f &curr_pos = inertial_nav.get_position();
     destination = pv_location_to_vector_with_default(destination_loc, curr_pos);
-
-    if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        destination.z = max(1.0, destination_loc.alt);
-    }
  }
 #endif   // WPCRUISE_ENABLED == ENABLED
