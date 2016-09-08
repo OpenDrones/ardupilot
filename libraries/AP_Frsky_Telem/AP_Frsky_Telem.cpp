@@ -46,6 +46,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _sats_data_ready(false),
     _gps_sats(0),
     _gps_hdop(0),
+    _home_distance_cm(0),
     _gps_data_ready(false),
     _pos_gps_ok(false),
     _course_in_degrees(0),
@@ -63,7 +64,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _baro_data_ready(false),
     _baro_alt_meters(0),
     _baro_alt_cm(0),
-	_sonar_alt_cm(0),
+	_target_sonar_alt_cm(0),
     _mode_data_ready(false),
     _mode(0),
     _armed_data_ready(false),
@@ -300,7 +301,8 @@ void AP_Frsky_Telem::sport_tick(void)
                         send_mission_num();
                         break;
                     case 11:
-                        send_gps_hdop();
+                        // send_gps_hdop();
+                        send_home_distance();
                         break;
                     }
 
@@ -318,7 +320,7 @@ void AP_Frsky_Telem::sport_tick(void)
                         send_baro_alt_m();
                         break;
                     case 1:
-                        send_sonar_alt_cm();
+                        send_target_sonar_alt_cm();
                         break;
                     }
                     _vario_call ++;
@@ -500,13 +502,17 @@ void AP_Frsky_Telem::calc_baro_alt()
 /*
  * calc_sonar_alt : send sonar altitude in Meters based on sensor measurement
  */
-void AP_Frsky_Telem::calc_sonar_alt(int16_t sonar_alt)
+void AP_Frsky_Telem::calc_target_sonar_alt(int16_t target_sonar_alt)
 {
-    // _sonar_alt_cm: 
-    _sonar_alt_cm = sonar_alt;
+    // _target_sonar_alt_cm: 
+    _target_sonar_alt_cm = target_sonar_alt;
 }
 
-
+// calc_home_distance: calc distance from current pos to home pos
+void AP_Frsky_Telem::calc_home_distance(int32_t home_distance)
+{
+    _home_distance_cm = home_distance;
+}
 /**
  * Formats the decimal latitude/longitude to the required degrees/minutes.
  */
@@ -630,9 +636,9 @@ void AP_Frsky_Telem::send_baro_alt_m(void)
 /*
  * send barometer altitude decimal part
  */
-void AP_Frsky_Telem::send_sonar_alt_cm(void)
+void AP_Frsky_Telem::send_target_sonar_alt_cm(void)
 {
-    frsky_send_data(FRSKY_ID_ACCEL_Z, _sonar_alt_cm);
+    frsky_send_data(FRSKY_ID_ACCEL_Z, _target_sonar_alt_cm);
 }
 
 /*
@@ -685,10 +691,19 @@ void AP_Frsky_Telem::send_mission_num(void)
 
 /*
  * send hdop  
- */
+ 
 void AP_Frsky_Telem::send_gps_hdop(void)
 {
     frsky_send_data(FRSKY_ID_ACCEL_X, _gps_hdop);
+}
+*/
+
+/* 
+send home distance
+*/
+void AP_Frsky_Telem::send_home_distance(void)
+{
+    frsky_send_data(FRSKY_ID_ACCEL_X, _home_distance_cm);
 }
 
 /*
