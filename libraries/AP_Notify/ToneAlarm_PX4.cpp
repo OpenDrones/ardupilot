@@ -278,6 +278,14 @@ void ToneAlarm_PX4::update()
         }
     }
 
+    // indicate cruise state
+    if (flags.cruise_loiter != AP_Notify::flags.cruise_loiter) {
+        flags.cruise_loiter = AP_Notify::flags.cruise_loiter;
+        if (flags.cruise_loiter) {
+            play_tone(AP_NOTIFY_PX4_TONE_QUIET_ARMING_WARNING);
+        }
+    }
+
 }
 
 #endif // CONFIG_HAL_BOARD == HAL_BOARD_PX4

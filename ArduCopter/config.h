@@ -741,7 +741,8 @@
  # define DEFAULT_NOTIFY_BITMASK \
     MASK_NOTIFY_BATT | \
     MASK_NOTIFY_EKF | \
-    MASK_NOTIFY_DRAINOFF
+    MASK_NOTIFY_DRAINOFF | \
+    MASK_NOTIFY_CRUISE_LOIT
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

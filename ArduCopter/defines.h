@@ -294,6 +294,7 @@ enum Wpcruisestate {
 #define MASK_NOTIFY_BATT                (1<<1)
 #define MASK_NOTIFY_EKF                 (1<<2)
 #define MASK_NOTIFY_DRAINOFF            (1<<3)
+#define MASK_NOTIFY_CRUISE_LOIT         (1<<4)
 
 // DATA - event logging
 #define DATA_MAVLINK_FLOAT                  1
