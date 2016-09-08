@@ -47,6 +47,7 @@
 #define AP_COMPASS_MAX_XYZ_ANG_DIFF radians(50.0f)
 #define AP_COMPASS_MAX_XY_ANG_DIFF radians(30.0f)
 #define AP_COMPASS_MAX_XY_LENGTH_DIFF 100.0f
+#define COMPASS_MOUNT_ANGLE_DELTA_DEFAULT     1.0f
 
 class Compass
 {
@@ -158,6 +159,7 @@ public:
     /// @param  radians             Local field declination.
     /// @param save_to_eeprom       true to save to eeprom (false saves only to memory)
     ///
+    void set_compass_mnt_ang(int8_t plus_minus, bool save_to_eeprom = true);
     void set_declination(float radians, bool save_to_eeprom = true);
     float get_declination() const;
 
@@ -283,6 +285,7 @@ private:
 
     // mount error angle of compass
     AP_Float    _compass_mount_angle;
+    AP_Float    _compass_mount_angle_delta;
 
     // enable automatic declination code
     AP_Int8     _auto_declination;                  

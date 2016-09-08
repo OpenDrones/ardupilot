@@ -68,7 +68,8 @@ enum aux_sw_func {
     AUXSW_BRAKE =               33, // Brake flight mode
     AUXSW_CRUISE =              34, // Cruise flight mode
     AUXSW_WPCRUISE =            35, // WpCruise flight mode
-    AUXSW_CLEAR_AND_SAVE_WP =   36  // clear mission first and then save mission waypoint
+    AUXSW_CLEAR_AND_SAVE_WP =   36, // clear mission first and then save mission waypoint
+    AUXSW_COMPASS_MNT_ANG_D =   37  // set compass mount error angle with delta angle
 };
 
 // Frame types

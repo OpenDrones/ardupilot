@@ -676,6 +676,16 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             }
             break;
 #endif
+
+        case AUXSW_COMPASS_MNT_ANG_D:
+            // if switch high add compass mount angle delta
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                compass.set_compass_mnt_ang(-1, true);
+            } else if (ch_flag == AUX_SWITCH_LOW) {
+                // if switch low minus compass mount angle delta
+                compass.set_compass_mnt_ang(1, true);
+            }
+            break;
     }
 }
 
