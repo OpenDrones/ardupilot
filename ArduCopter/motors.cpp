@@ -380,7 +380,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                       in the EKF. Allow for larger accel discrepancy
                       for IMU3 as it may be running at a different temperature
                      */
-                    threshold *= 2;
+                    threshold *= 3;
                 }
                 if (vec_diff.length() > threshold) {
                     if (display_failure) {
