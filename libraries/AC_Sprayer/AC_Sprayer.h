@@ -48,6 +48,13 @@ public:
     /// Constructor
     AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsensor, const AP_AHRS_NavEKF* ahrs, const AP_Motors* motors);
 
+    // supported sprayer pump types
+    enum SprayerPump_Type {
+        Pump_Type_None = 0,
+        Pump_Type_Spinner = 1,    // DAISCH Spinning pump control pwm range from 0 to 5000
+        Pump_Type_Diaphragm = 2   // diaphragm pump  control pwm range from 1000 to 2000
+    };
+
     void init();
 
     /// enable - allows sprayer to be enabled/disabled.  Note: this does not update the eeprom saved value
@@ -92,6 +99,7 @@ private:
     AP_Int16        _width;
     AP_Float        _area;
     AP_Int16        _drain_off_delay;
+    AP_Int8         _sprayer_pump_type;     // sprayer pump type -- 1-DAISCH spinning pump 2-Diaphragm pump
 
     // flag bitmask
     struct sprayer_flags_type {

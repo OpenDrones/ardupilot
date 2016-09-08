@@ -87,6 +87,14 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("DRAIN_DLY",   9, AC_Sprayer, _drain_off_delay, 2000),
 
+    // @Param: PUMP_TYPE
+    // @DisplayName: sprayer pump type
+    // @Description: sprayer pump type --1-DAISCH spinning pump 2-Diaphragm pump
+    // @Units: 
+    // @Range: 0 2
+    // @User: Standard
+    AP_GROUPINFO("PUMP_TYPE",   10, AC_Sprayer, _sprayer_pump_type, Pump_Type_None),
+
     AP_GROUPEND
 };
 
@@ -165,11 +173,13 @@ AC_Sprayer::update()
     }
     _armed = _motors->armed();
 
-
     // exit immediately if we are disabled (perhaps set pwm values back to defaults)
     if (!_enabled) {
         _drain_off_pre_time = 0;
         _flags.drain_off_precheck = false;
+        // ensure sprayer and spinner are off
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_spinner);
         return;
     }
 
@@ -272,8 +282,20 @@ AC_Sprayer::update()
     }
 
     // if spraying or testing update the pump rate percent, for radio direct pwm control（200Hz）, 100% duty -> 5000us
-    if (_flags.spraying || _flags.testing) {        
-        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min(max(0.5 * vel_fwd_abs * _pump_pct_1ms, 50*_pump_min_pct),5000));
+    if (_flags.spraying || _flags.testing) {
+        switch (_sprayer_pump_type) {
+            case Pump_Type_Spinner:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                break;
+
+            case Pump_Type_Diaphragm:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                break;
+
+            default:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                break;
+        }
         RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
     }else{
         // ensure sprayer and spinner are off
