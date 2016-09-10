@@ -22,7 +22,6 @@ static struct {
     bool flag_reach_cruise_des;        // flag to update cruise destination if cruise state is FORTH or BACK
     bool flag_init_cruise_des;         // flag to calc initial cruise destination
     bool flag_recalc_cruise_state;     // flag to recalc cruise state according to pilot input
-    bool flag_cruise_brake;            // flag to brake during cruise forth or back
     cruise_state_mode state     :3;    // cruise state to calculate different destination
      // get current bearing when changing into cruise mode
     float cos_bearing, sin_bearing;
@@ -47,7 +46,6 @@ bool Copter::cruise_init()
         cruise.flag_init_cruise_des = true;
         cruise.flag_reach_cruise_des = false;
         cruise.flag_recalc_cruise_state = false;
-        cruise.flag_cruise_brake = false;
         cruise.state = CRUISE_LOITER;
         cruise.cos_bearing = ahrs.cos_yaw();
         cruise.sin_bearing = ahrs.sin_yaw();
@@ -174,7 +172,7 @@ void Copter::cruise_run()
             cruise.flag_init_cruise_des = false;
         }
         // calc flag if reaching destination
-        if (cruise.state == CRUISE_RIGHT || cruise.state == CRUISE_LEFT || cruise.flag_cruise_brake) {
+        if (cruise.state == CRUISE_RIGHT || cruise.state == CRUISE_LEFT) {
             cruise.flag_reach_cruise_des = false;
         } else {
             // calc flag to reach next cruise destination
@@ -184,19 +182,10 @@ void Copter::cruise_run()
         // switch cruise state according to pilot input
         if ((cruise.state == CRUISE_FORTH && (target_pitch > aparm.angle_max * PILOT_IN_SET_CRUISE_DIRECTION_THRESHOLD)) || 
             (cruise.state == CRUISE_BACK && (target_pitch < -aparm.angle_max * PILOT_IN_SET_CRUISE_DIRECTION_THRESHOLD))) {
-            // set flag cruise brake
-            cruise.flag_cruise_brake = true;
-            // set stopping point as destination
-            pos_control.get_stopping_point_xy(cruise.destination);
-            pos_control.get_stopping_point_z(cruise.destination);
-            // set destination
-            wp_nav.set_wp_xy_origin_and_destination(cruise.destination);
-        }
-
-        // set cruise state as cruise_loiter if reaching stopping point during cruise brake
-        if (cruise.flag_cruise_brake && wp_nav.reached_wp_destination()) {
+            // set cruise state
             cruise.state = CRUISE_LOITER;
-            cruise.flag_cruise_brake = false;
+            // set target to current position
+            wp_nav.init_loiter_target();
         }
 
         // switch cruise state as loiter when finishing right or left mission
@@ -208,6 +197,7 @@ void Copter::cruise_run()
         if (g.notify_bitmask & MASK_NOTIFY_CRUISE_LOIT) {
             AP_Notify::flags.cruise_loiter = (cruise.state == CRUISE_LOITER);
         }
+        
         
         // run waypoint controller
         wp_nav.update_wpnav_xy();
