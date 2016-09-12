@@ -70,6 +70,7 @@ Copter::Copter(void) :
 #if FRSKY_TELEM_ENABLED == ENABLED
     frsky_telemetry(ahrs, battery, sprayer, motors, mission, flow_sensor),
 #endif
+    unarmed_reason_id(0),
     climb_rate(0),
     sonar_alt(0),
     sonar_alt_ok_last(0),

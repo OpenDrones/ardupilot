@@ -103,6 +103,9 @@ public:
 
     void calc_home_distance(int32_t home_distance);
 
+    // 1:armed 2:compass 3:GPS 4:accel/gyro 5:voltage 6:others
+    void set_unarmed_reason(uint8_t unarmed_reason_num); 
+
 private:
 
     // init_uart_for_sport - initialise uart for use by sport
@@ -208,7 +211,8 @@ private:
     uint8_t _mode; 
 
     bool _armed_data_ready;
-    uint8_t _armed_stat;
+    uint16_t _armed_stat;
+    uint8_t _unarmed_reason;
 
     uint8_t _fas_call;
     uint8_t _gps_call;

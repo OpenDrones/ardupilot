@@ -124,7 +124,7 @@ void AP_Frsky_Telem::send_frames(uint8_t control_mode)
         }
 
         if (!_armed_data_ready) {
-            _armed_stat = _motors.armed()*100;
+            _armed_stat = _unarmed_reason*100;
             _armed_data_ready = true;
         }
 
@@ -512,6 +512,12 @@ void AP_Frsky_Telem::calc_target_sonar_alt(int16_t target_sonar_alt)
 void AP_Frsky_Telem::calc_home_distance(int32_t home_distance)
 {
     _home_distance_cm = home_distance;
+}
+
+// set unarmed reason
+void AP_Frsky_Telem::set_unarmed_reason(uint8_t unarmed_reason_num)
+{
+    _unarmed_reason = unarmed_reason_num;
 }
 /**
  * Formats the decimal latitude/longitude to the required degrees/minutes.

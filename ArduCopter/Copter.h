@@ -378,6 +378,8 @@ private:
     AP_Frsky_Telem frsky_telemetry;
 #endif
 
+    // unarmed reason sent by frsky telem
+    uint8_t unarmed_reason_id;
     // Altitude
     // The cm/s we are moving up or down based on filtered data - Positive = UP
     int16_t climb_rate;
