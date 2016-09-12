@@ -632,8 +632,13 @@ void Copter::update_altitude()
 
     // read in sonar altitude
     sonar_alt           = read_sonar();
-
-    frsky_telemetry.calc_target_sonar_alt(target_sonar_alt);
+#if FRSKY_TELEM_ENABLED == ENABLED
+    if (motors.armed()) {
+        frsky_telemetry.calc_target_sonar_alt(target_sonar_alt);
+    } else {
+        frsky_telemetry.calc_target_sonar_alt(sonar_alt);
+    }
+#endif
     
     // write altitude info to dataflash logs
     if (should_log(MASK_LOG_CTUN)) {
