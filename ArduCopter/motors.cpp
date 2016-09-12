@@ -422,7 +422,12 @@ bool Copter::pre_arm_checks(bool display_failure)
             for(uint8_t i=0; i<ins.get_gyro_count(); i++) {
                 // get rotation rate difference between gyro #i and primary gyro
                 Vector3f vec_diff = ins.get_gyro(i) - ins.get_gyro();
-                if (vec_diff.length() > PREARM_MAX_GYRO_VECTOR_DIFF) {
+                float threshold = PREARM_MAX_GYRO_VECTOR_DIFF;
+                // enlarge third imu threshold
+                if (i >= 2) {
+                    threshold *= 2;
+                }
+                if (vec_diff.length() > threshold) {
                     if (display_failure) {
                         gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent Gyros"));
                     }
