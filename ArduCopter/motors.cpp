@@ -617,6 +617,9 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     // return true if GPS is not required
     if (!gps_required) {
         AP_Notify::flags.pre_arm_gps_check = true;
+        if (unarmed_reason_id == 3) {
+            unarmed_reason_id = 0;
+        }
         return true;
     }
 
@@ -644,7 +647,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF compass variance"));
         }
-        unarmed_reason_id = 6;
+        unarmed_reason_id = 2;
         return false;
     }
 
@@ -654,13 +657,16 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF-home variance"));
         }
         AP_Notify::flags.pre_arm_gps_check = false;
-        unarmed_reason_id = 6;
+        unarmed_reason_id = 3;
         return false;
     }
 
     // return true immediately if gps check is disabled
     if (!(g.arming_check == ARMING_CHECK_ALL || g.arming_check & ARMING_CHECK_GPS)) {
         AP_Notify::flags.pre_arm_gps_check = true;
+        if (unarmed_reason_id == 3) {
+            unarmed_reason_id = 0;
+        }
         return true;
     }
 
@@ -676,6 +682,9 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
 
     // if we got here all must be ok
     AP_Notify::flags.pre_arm_gps_check = true;
+    if (unarmed_reason_id == 3) {
+        unarmed_reason_id = 0;
+    }
     return true;
 }
 
