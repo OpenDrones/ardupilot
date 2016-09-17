@@ -105,13 +105,12 @@ void Copter::rpm_update(void)
 void Copter::flow_sensor_update(void)
 {
     flow_sensor.update();
-    /*
-    if (flow_sensor.healthy(0) || flow_sensor.healthy(1)) {
+	// log flow rate if there's flow sensor
+    if (flow_sensor.num_sensors() != 0) {
         if (should_log(MASK_LOG_RCIN)) {
-            DataFlash.Log_Write_RPM(rpm_sensor);
+            DataFlash.Log_Write_FlowS(flow_sensor);
         }
     }
-    */
 }
 
 // initialise compass
