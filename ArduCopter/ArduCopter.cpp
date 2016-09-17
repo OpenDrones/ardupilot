@@ -433,9 +433,10 @@ void Copter::three_hz_loop()
 
 #if SPRAYER == ENABLED
     sprayer.update();
-    if (!AP_Notify::flags.drain_off && sprayer.get_drain_off()) {
+    if (!ap.drain_off && sprayer.get_drain_off()) {
         Log_Write_Event(DATA_SPRAY_DRAIN_OFF);
     }
+    ap.drain_off = sprayer.get_drain_off();
     if (g.notify_bitmask & MASK_NOTIFY_DRAINOFF) {
         AP_Notify::flags.drain_off = sprayer.get_drain_off();
     }

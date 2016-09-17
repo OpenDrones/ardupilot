@@ -245,6 +245,7 @@ private:
             enum HomeState home_state   : 2; // 18,19   // home status (unset, set, locked)
             uint8_t using_interlock     : 1; // 20      // aux switch motor interlock function is in use
             uint8_t motor_emergency_stop: 1; // 21      // motor estop switch, shuts off motors when enabled
+            uint8_t drain_off           : 1; // 22      // flag of drain off
         };
         uint32_t value;
     } ap;
