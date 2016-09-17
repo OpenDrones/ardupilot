@@ -260,7 +260,7 @@ void ToneAlarm_PX4::update()
         flags.drain_off = AP_Notify::flags.drain_off;
         if (flags.drain_off) {
             // drain off warning tune
-            play_tone(AP_NOTIFY_PX4_TONE_LOUD_LAND_WARNING_CTS);
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_ATTENTION_NEEDED);
         }
     }
 
