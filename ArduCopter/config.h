@@ -689,6 +689,23 @@
  # define ACCEL_Z_FILT_HZ   20.0f
 #endif
 
+// rate to throttle (vertical) control gains
+#ifndef RATE_Z_P
+ # define RATE_Z_P     0.50f
+#endif
+#ifndef RATE_Z_I
+ # define RATE_Z_I     1.00f
+#endif
+#ifndef RATE_Z_D
+ # define RATE_Z_D     0.0f
+#endif
+#ifndef RATE_Z_IMAX
+ # define RATE_Z_IMAX  400
+#endif
+#ifndef RATE_Z_FILT_HZ
+ # define RATE_Z_FILT_HZ   20.0f
+#endif
+
 // default maximum vertical velocity and acceleration the pilot may request
 #ifndef PILOT_VELZ_MAX
  # define PILOT_VELZ_MAX    250     // maximum vertical velocity in cm/s

@@ -828,6 +828,39 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @User: Standard
     GGROUP(pid_accel_z, "ACCEL_Z_", AC_PID),
 
+    // @Param: RATE_Z_P
+    // @DisplayName: Throttle velocity controller P gain
+    // @Description: Throttle velocity controller P gain.  Converts the difference between desired vertical velocity and actual velocity directly into a motor output
+    // @Range: 0.500 1.500
+    // @User: Standard
+
+    // @Param: RATE_Z_I
+    // @DisplayName: Throttle velocity controller I gain
+    // @Description: Throttle velocity controller I gain.  Corrects long-term difference in desired vertical velocity and actual velocity
+    // @Range: 0.000 3.000
+    // @User: Standard
+
+    // @Param: RATE_Z_IMAX
+    // @DisplayName: Throttle velocity controller I gain maximum
+    // @Description: Throttle velocity controller I gain maximum.  Constrains the maximum pwm that the I term will generate
+    // @Range: 0 1000
+    // @Units: Percent*10
+    // @User: Standard
+
+    // @Param: RATE_Z_D
+    // @DisplayName: Throttle velocity controller D gain
+    // @Description: Throttle velocity controller D gain.  Compensates for short-term change in desired vertical velocity vs actual velocity
+    // @Range: 0.000 0.400
+    // @User: Standard
+
+    // @Param: RATE_Z_FILT_HZ
+    // @DisplayName: Throttle velocity filter
+    // @Description: Filter applied to velocity to reduce noise.  Lower values reduce noise but add delay.
+    // @Range: 1.000 100.000
+    // @Units: Hz
+    // @User: Standard
+    GGROUP(pid_rate_z, "RATE_Z_", AC_PID),
+
     // P controllers
     //--------------
     // @Param: STB_RLL_P

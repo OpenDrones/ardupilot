@@ -95,8 +95,8 @@ Copter::Copter(void) :
     attitude_control(ahrs, aparm, motors, g.p_stabilize_roll, g.p_stabilize_pitch, g.p_stabilize_yaw,
                      g.pid_rate_roll, g.pid_rate_pitch, g.pid_rate_yaw),
 #endif
-    pos_control(ahrs, inertial_nav, motors, attitude_control,
-                g.p_alt_hold, g.p_vel_z, g.pid_accel_z,
+    pos_control(ahrs, inertial_nav, EKF, motors, attitude_control,
+                g.p_alt_hold, g.p_vel_z, g.pid_accel_z, g.pid_rate_z,
                 g.p_pos_xy, g.pi_vel_xy),
     wp_nav(inertial_nav, ahrs, pos_control, attitude_control),
     circle_nav(inertial_nav, ahrs, pos_control),
