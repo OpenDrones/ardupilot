@@ -46,6 +46,7 @@
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
 #define POSCONTROL_IMU_ERROR_TIMEOUT_MS         2000
 #define POSCONTROL_ACCEL_Z_MAX_CM               350.0f
+#define POSCONTROL_RATIO_THRESHOLD              0.1f
 
 class AC_PosControl
 {

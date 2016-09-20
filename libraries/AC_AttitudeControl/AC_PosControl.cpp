@@ -26,15 +26,6 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("_ACC_Z_MAX", 2, AC_PosControl, _accel_z_max_meas, POSCONTROL_ACCEL_Z_MAX_CM),
 
-    // @Param: RATIO_THRESHOLD
-    // @DisplayName: IMU RATIO THRESHOLD 
-    // @Description: ratio threshold to decide whether imu is bad
-    // @Units: 
-    // @Range: 0 0.5
-    // @Increment: 0.01
-    // @User: Advanced
-    AP_GROUPINFO("_RATIO_THRES", 3, AC_PosControl, _ratio_threhold, 0.1),
-
     AP_GROUPEND
 };
 
@@ -461,7 +452,7 @@ void AC_PosControl::rate_to_accel_z()
     
     // get imu ratio
     _ekf.getIMU1Weighting(ratio);
-    if (ratio >= _ratio_threhold && ratio <= (1 - _ratio_threhold)) {
+    if (ratio >= POSCONTROL_RATIO_THRESHOLD && ratio <= (1 - POSCONTROL_RATIO_THRESHOLD)) {
         _last_imu_ok_time_ms = hal.scheduler->millis();
     } else if (hal.scheduler->millis() - _last_imu_ok_time_ms > POSCONTROL_IMU_ERROR_TIMEOUT_MS) {
         rate_to_throttle(_vel_error.z);
