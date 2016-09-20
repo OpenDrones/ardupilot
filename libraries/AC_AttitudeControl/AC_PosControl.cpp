@@ -483,7 +483,7 @@ void AC_PosControl::rate_to_throttle(float vel_error_z)
     _pid_rate_z.set_input_filter_d(vel_error_z);
 
     // separately calculate p, i, d values
-    p = _pid_rate_z.get_p();
+    p = constrain_float(_pid_rate_z.get_p(), -200, 200);
 
     // get i term
     i = _pid_rate_z.get_integrator();
