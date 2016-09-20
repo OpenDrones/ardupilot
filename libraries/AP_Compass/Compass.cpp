@@ -249,7 +249,7 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @Description: Enable or disable the third compass for determining heading.
     // @Values: 0:Disabled,1:Enabled
     // @User: Advanced
-    AP_GROUPINFO("USE3",    21, Compass, _state[2].use_for_yaw, 1),
+    AP_GROUPINFO("USE3",    21, Compass, _state[2].use_for_yaw, 0),
 
     // @Param: ORIENT3
     // @DisplayName: Compass3 orientation

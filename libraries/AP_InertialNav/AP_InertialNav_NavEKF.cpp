@@ -19,7 +19,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units:
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C0", 0, AP_InertialNav_NavEKF, _alt_corr_fac_a, 3),
+    AP_GROUPINFO("ALT_C0", 0, AP_InertialNav_NavEKF, _alt_corr_fac_a, 2),
 
     // @Param: ALT_CORR_FAC1
     // @DisplayName: 
@@ -27,7 +27,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: 
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C1", 1, AP_InertialNav_NavEKF, _alt_corr_fac_b, 6),
+    AP_GROUPINFO("ALT_C1", 1, AP_InertialNav_NavEKF, _alt_corr_fac_b, 4),
 
     // @Param: ALT_CORR_FAC0FW
     // @DisplayName: 
@@ -35,7 +35,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units:
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C0FW", 2, AP_InertialNav_NavEKF, _alt_corr_fac_af, 5),
+    AP_GROUPINFO("ALT_C0FW", 2, AP_InertialNav_NavEKF, _alt_corr_fac_af, 3),
 
     // @Param: ALT_CORR_FAC1FW
     // @DisplayName: 
@@ -43,7 +43,7 @@ const AP_Param::GroupInfo AP_InertialNav_NavEKF::var_info[] PROGMEM = {
     // @Units: 
     // @Range:
     // @Increment: 1
-    AP_GROUPINFO("ALT_C1FW", 3, AP_InertialNav_NavEKF, _alt_corr_fac_bf, 10),
+    AP_GROUPINFO("ALT_C1FW", 3, AP_InertialNav_NavEKF, _alt_corr_fac_bf, 6),
 
     // @Param: ALT_CORR_MAX
     // @DisplayName: 

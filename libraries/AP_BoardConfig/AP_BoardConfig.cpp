@@ -50,7 +50,7 @@ const AP_Param::GroupInfo AP_BoardConfig::var_info[] PROGMEM = {
     // @DisplayName: PWM Count
     // @Description: Number of auxillary PWMs to enable. On PX4v1 only 0 or 2 is valid. On Pixhawk 0, 2, 4 or 6 is valid.
     // @Values: 0:No PWMs,2:Two PWMs,4:Four PWMs,6:Six PWMs
-    AP_GROUPINFO("PWM_COUNT",    0, AP_BoardConfig, _pwm_count, BOARD_PWM_COUNT_DEFAULT),
+    AP_GROUPINFO("PWM_COUNT",    0, AP_BoardConfig, _pwm_count, 6),
 
     // @Param: SER1_RTSCTS
     // @DisplayName: Serial 1 flow control
@@ -68,7 +68,7 @@ const AP_Param::GroupInfo AP_BoardConfig::var_info[] PROGMEM = {
     // @DisplayName:  Enable use of safety arming switch
     // @Description: Disabling this option will disable the use of the safety switch on PX4 for arming. Use of the safety switch is highly recommended, so you should leave this option set to 1 except in unusual circumstances.
     // @Values: 0:Disabled,1:Enabled
-    AP_GROUPINFO("SAFETYENABLE",   3, AP_BoardConfig, _safety_enable, 1),
+    AP_GROUPINFO("SAFETYENABLE",   3, AP_BoardConfig, _safety_enable, 0),
 
     // @Param: SBUS_OUT
     // @DisplayName:  Enable use of SBUS output

@@ -93,7 +93,7 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] PROGMEM = {
     // @Units: 
     // @Range: 0 2
     // @User: Standard
-    AP_GROUPINFO("PUMP_TYPE",   10, AC_Sprayer, _sprayer_pump_type, Pump_Type_None),
+    AP_GROUPINFO("PUMP_TYPE",   10, AC_Sprayer, _sprayer_pump_type, Pump_Type_Diaphragm),
 
     AP_GROUPEND
 };

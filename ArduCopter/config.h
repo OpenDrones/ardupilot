@@ -141,7 +141,7 @@
 // PWM control
 // default RC speed in Hz
 #ifndef RC_FAST_SPEED
-   #   define RC_FAST_SPEED 490
+   #   define RC_FAST_SPEED 400
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -169,11 +169,11 @@
 #endif
 
 #ifndef SONAR_GAIN_UP_DEFAULT
- # define SONAR_GAIN_UP_DEFAULT 1.2f           // gain up for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
+ # define SONAR_GAIN_UP_DEFAULT 1.5f           // gain up for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef SONAR_GAIN_DOWN_DEFAULT
- # define SONAR_GAIN_DOWN_DEFAULT 0.3f           // gain down for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
+ # define SONAR_GAIN_DOWN_DEFAULT 0.4f           // gain down for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef THR_SURFACE_TRACKING_UP_VELZ_MAX
@@ -216,7 +216,7 @@
 // Battery monitoring
 //
 #ifndef FS_BATT_VOLTAGE_DEFAULT
- # define FS_BATT_VOLTAGE_DEFAULT       10.5f       // default battery voltage below which failsafe will be triggered
+ # define FS_BATT_VOLTAGE_DEFAULT       22.2f       // default battery voltage below which failsafe will be triggered
 #endif
 
 #ifndef FS_BATT_MAH_DEFAULT
@@ -233,7 +233,7 @@
 
 // prearm GPS hdop check
 #ifndef GPS_HDOP_GOOD_DEFAULT
- # define GPS_HDOP_GOOD_DEFAULT         140     // minimum hdop that represents a good position.  used during pre-arm checks if fence is enabled
+ # define GPS_HDOP_GOOD_DEFAULT         100     // minimum hdop that represents a good position.  used during pre-arm checks if fence is enabled
 #endif
 
 // GCS failsafe
@@ -281,10 +281,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //  EKF Failsafe
 #ifndef FS_EKF_ACTION_DEFAULT
- # define FS_EKF_ACTION_DEFAULT         FS_EKF_ACTION_LAND  // EKF failsafe triggers land by default
+ # define FS_EKF_ACTION_DEFAULT         FS_EKF_ACTION_ALTHOLD  // EKF failsafe triggers althold by default
 #endif
 #ifndef FS_EKF_THRESHOLD_DEFAULT
- # define FS_EKF_THRESHOLD_DEFAULT      0.8f    // EKF failsafe's default compass and velocity variance threshold above which the EKF failsafe will be triggered
+ # define FS_EKF_THRESHOLD_DEFAULT      0.6f    // EKF failsafe's default compass and velocity variance threshold above which the EKF failsafe will be triggered
 #endif
 
 #ifndef EKF_ORIGIN_MAX_DIST_M
@@ -369,13 +369,13 @@
  # define FLIGHT_MODE_3                  STABILIZE
 #endif
 #ifndef FLIGHT_MODE_4
- # define FLIGHT_MODE_4                  STABILIZE
+ # define FLIGHT_MODE_4                  ALT_HOLD
 #endif
 #ifndef FLIGHT_MODE_5
  # define FLIGHT_MODE_5                  STABILIZE
 #endif
 #ifndef FLIGHT_MODE_6
- # define FLIGHT_MODE_6                  STABILIZE
+ # define FLIGHT_MODE_6                  LOITER
 #endif
 
 
@@ -383,7 +383,7 @@
 // Throttle Failsafe
 //
 #ifndef FS_THR_VALUE_DEFAULT
- # define FS_THR_VALUE_DEFAULT             975
+ # define FS_THR_VALUE_DEFAULT             950
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -398,7 +398,7 @@
 // Landing
 //
 #ifndef LAND_SPEED
- # define LAND_SPEED    50          // the descent speed for the final stage of landing in cm/s
+ # define LAND_SPEED    30          // the descent speed for the final stage of landing in cm/s
 #endif
 #ifndef LAND_START_ALT
  # define LAND_START_ALT 1000         // altitude in cm where land controller switches to slow rate of descent
@@ -475,11 +475,11 @@
 
 // Stabilize (angle controller) gains
 #ifndef STABILIZE_ROLL_P
- # define STABILIZE_ROLL_P          4.5f
+ # define STABILIZE_ROLL_P          3.5f
 #endif
 
 #ifndef STABILIZE_PITCH_P
- # define STABILIZE_PITCH_P         4.5f
+ # define STABILIZE_PITCH_P         3.5f
 #endif
 
 #ifndef  STABILIZE_YAW_P
@@ -532,7 +532,7 @@
  # define ROLL_PITCH_INPUT_MAX      4500            // roll, pitch input range
 #endif
 #ifndef DEFAULT_ANGLE_MAX
- # define DEFAULT_ANGLE_MAX         4500            // ANGLE_MAX parameters default value
+ # define DEFAULT_ANGLE_MAX         2500            // ANGLE_MAX parameters default value
 #endif
 #ifndef ANGLE_RATE_MAX
  # define ANGLE_RATE_MAX            18000           // default maximum rotation rate in roll/pitch axis requested by angle controller used in stabilize, loiter, rtl, auto flight modes
@@ -694,13 +694,13 @@
  # define RATE_Z_P     0.50f
 #endif
 #ifndef RATE_Z_I
- # define RATE_Z_I     1.00f
+ # define RATE_Z_I     0.50f
 #endif
 #ifndef RATE_Z_D
  # define RATE_Z_D     0.0f
 #endif
 #ifndef RATE_Z_IMAX
- # define RATE_Z_IMAX  400
+ # define RATE_Z_IMAX  200
 #endif
 #ifndef RATE_Z_FILT_HZ
  # define RATE_Z_FILT_HZ   20.0f
@@ -724,7 +724,7 @@
 #endif
 
 #ifndef AUTO_DISARMING_DELAY
-# define AUTO_DISARMING_DELAY  10
+# define AUTO_DISARMING_DELAY  6
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -747,9 +747,7 @@
     MASK_LOG_CMD | \
     MASK_LOG_CURRENT | \
     MASK_LOG_RCOUT | \
-    MASK_LOG_OPTFLOW | \
     MASK_LOG_COMPASS | \
-    MASK_LOG_CAMERA | \
     MASK_LOG_MOTBATT
 #endif
 

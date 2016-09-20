@@ -25,19 +25,19 @@ const AP_Param::GroupInfo AP_FlowSensor::var_info[] PROGMEM = {
     // @DisplayName: RPM type
     // @Description: What type of RPM sensor is connected
     // @Values: 0:None,1:PX4-PWM
-    AP_GROUPINFO("_TYPE",    0, AP_FlowSensor, _type[0], 0),
+    AP_GROUPINFO("_TYPE",    0, AP_FlowSensor, _type[0], 1),
 
     // @Param: _SCALING
     // @DisplayName: RPM scaling
     // @Description: Scaling factor between sensor reading and RPM.
     // @Increment: 0.001
-    AP_GROUPINFO("_SCALING", 1, AP_FlowSensor, _scaling[0], 1.0f),
+    AP_GROUPINFO("_SCALING", 1, AP_FlowSensor, _scaling[0], 0.056f),
 
     // @Param: _MAX
     // @DisplayName: Maximum RPM
     // @Description: Maximum RPM to report
     // @Increment: 1
-    AP_GROUPINFO("_MAX", 2, AP_FlowSensor, _maximum[0], 0),
+    AP_GROUPINFO("_MAX", 2, AP_FlowSensor, _maximum[0], 30),
 
 #if RPM_MAX_INSTANCES > 1
     // @Param: 2_TYPE
