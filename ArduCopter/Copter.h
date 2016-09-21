@@ -1,7 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "AgCopter V1.1.0"
-#define FIRMWARE_VERSION 1,1,0,FIRMWARE_VERSION_TYPE_OFFICIAL
+#define THISFIRMWARE "AgCopter V1.2.0"
+#define FIRMWARE_VERSION 1,2,0,FIRMWARE_VERSION_TYPE_OFFICIAL
 
 /*
    This program is free software: you can redistribute it and/or modify
@@ -245,6 +245,7 @@ private:
             enum HomeState home_state   : 2; // 18,19   // home status (unset, set, locked)
             uint8_t using_interlock     : 1; // 20      // aux switch motor interlock function is in use
             uint8_t motor_emergency_stop: 1; // 21      // motor estop switch, shuts off motors when enabled
+            uint8_t drain_off           : 1; // 22      // flag of drain off
         };
         uint32_t value;
     } ap;
@@ -378,6 +379,8 @@ private:
     AP_Frsky_Telem frsky_telemetry;
 #endif
 
+    // unarmed reason sent by frsky telem
+    uint8_t unarmed_reason_id;
     // Altitude
     // The cm/s we are moving up or down based on filtered data - Positive = UP
     int16_t climb_rate;
@@ -732,7 +735,8 @@ private:
     void circle_run();
     bool cruise_init();
     void cruise_run();
-    void update_cruise_des(Vector3f&);
+    void update_cruise_des_fwd(float, Vector3f&);
+    void update_cruise_des_rgt(float, Vector3f&);
     bool reach_cruise_des(Vector3f&);
     bool wpcruise_init();
     void wpcruise_run();

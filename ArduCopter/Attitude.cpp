@@ -253,10 +253,10 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
     
     float target_sonar_alt_old = target_sonar_alt;
     // flag to reset target sonar altitude when rangefinder switch on
-    if (!flag_reset_target_sonar_alt) {
+    if (flag_reset_target_sonar_alt) {
         if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
             target_sonar_alt = sonar_alt;
-            flag_reset_target_sonar_alt = true;
+            flag_reset_target_sonar_alt = false;
         }
 
         return target_rate;

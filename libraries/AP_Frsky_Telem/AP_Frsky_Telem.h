@@ -99,7 +99,12 @@ public:
     //  coming from the receiver for the SPort protocol
     void send_frames(uint8_t control_mode);
 
-    void calc_sonar_alt(int16_t sonar_alt);
+    void calc_target_sonar_alt(int16_t target_sonar_alt);
+
+    void calc_home_distance(int32_t home_distance);
+
+    // 1:armed 2:compass 3:GPS 4:accel/gyro 5:voltage 6:others
+    void set_unarmed_reason(uint8_t unarmed_reason_num); 
 
 private:
 
@@ -134,7 +139,7 @@ private:
     void send_mode(void);
     void send_armed_stat(void);
     void send_baro_alt_m(void);
-    void send_sonar_alt_cm(void);
+    void send_target_sonar_alt_cm(void);
     void send_batt_remain(void);
     void send_batt_volts(void);
     void send_current(void);
@@ -153,6 +158,7 @@ private:
     void send_gps_speed_cm(void);
     void send_gps_alt_meter(void);
     void send_gps_alt_cm(void);
+    void send_home_distance(void);
 
     AP_AHRS &_ahrs;                         // reference to attitude estimate
     AP_BattMonitor &_battery;               // reference to battery monitor object
@@ -198,13 +204,15 @@ private:
     int16_t _baro_alt_meters;
     uint16_t _baro_alt_cm;
 
-    uint16_t _sonar_alt_cm;
+    uint16_t _target_sonar_alt_cm;
+    uint16_t _home_distance_cm;
 
     bool _mode_data_ready;
     uint8_t _mode; 
 
     bool _armed_data_ready;
-    uint8_t _armed_stat;
+    uint16_t _armed_stat;
+    uint8_t _unarmed_reason;
 
     uint8_t _fas_call;
     uint8_t _gps_call;

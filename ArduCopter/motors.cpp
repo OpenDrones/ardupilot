@@ -227,6 +227,7 @@ bool Copter::pre_arm_checks(bool display_failure)
 {
     // exit immediately if already armed
     if (motors.armed()) {
+        unarmed_reason_id = 1;
         return true;
     }
 
@@ -236,6 +237,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Interlock/E-Stop Conflict"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
 
@@ -260,6 +262,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: RC not calibrated"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
     // check Baro
@@ -269,6 +272,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Barometer not healthy"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
         // Check baro & inav alt are within 1m if EKF is operating in an absolute position mode.
@@ -281,6 +285,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                 if (display_failure) {
                     gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Altitude disparity"));
                 }
+                unarmed_reason_id = 6;
                 return false;
             }
         }
@@ -293,6 +298,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
             }
+            unarmed_reason_id = 2;
             return false;
         }
 
@@ -301,6 +307,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not calibrated"));
             }
+            unarmed_reason_id = 2;
             return false;
         }
 
@@ -310,6 +317,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass offsets too high"));
             }
+            unarmed_reason_id = 2;
             return false;
         }
 
@@ -319,6 +327,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
             }
+            unarmed_reason_id = 2;
             return false;
         }
 
@@ -327,6 +336,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                     if (display_failure) {
                         gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent compasses"));
                     }
+                    unarmed_reason_id = 2;
                     return false;
                 }
 
@@ -334,6 +344,7 @@ bool Copter::pre_arm_checks(bool display_failure)
 
     // check GPS
     if (!pre_arm_gps_checks(display_failure)) {
+        unarmed_reason_id = 3;
         return false;
     }
 
@@ -343,6 +354,7 @@ bool Copter::pre_arm_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: check fence"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
 #endif
@@ -354,6 +366,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Accels not calibrated"));
             }
+            unarmed_reason_id = 4;
             return false;
         }
 
@@ -362,6 +375,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Accelerometers not healthy"));
             }
+            unarmed_reason_id = 4;
             return false;
         }
 
@@ -380,12 +394,15 @@ bool Copter::pre_arm_checks(bool display_failure)
                       in the EKF. Allow for larger accel discrepancy
                       for IMU3 as it may be running at a different temperature
                      */
-                    threshold *= 2;
+                    // threshold *= 3;
+					// cancel third accels inconsistency check
+                    break;
                 }
                 if (vec_diff.length() > threshold) {
                     if (display_failure) {
                         gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent Accelerometers"));
                     }
+                    unarmed_reason_id = 4;
                     return false;
                 }
             }
@@ -397,6 +414,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Gyros not healthy"));
             }
+            unarmed_reason_id = 4;
             return false;
         }
 
@@ -406,10 +424,15 @@ bool Copter::pre_arm_checks(bool display_failure)
             for(uint8_t i=0; i<ins.get_gyro_count(); i++) {
                 // get rotation rate difference between gyro #i and primary gyro
                 Vector3f vec_diff = ins.get_gyro(i) - ins.get_gyro();
+                // cancel third imu inconsistency check
+                if (i >= 2) {
+                    break;
+                }
                 if (vec_diff.length() > PREARM_MAX_GYRO_VECTOR_DIFF) {
                     if (display_failure) {
                         gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: inconsistent Gyros"));
                     }
+                    unarmed_reason_id = 4;
                     return false;
                 }
             }
@@ -424,6 +447,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Board Voltage"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
     }
@@ -436,6 +460,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Battery"));
             }
+            unarmed_reason_id = 5;
             return false;
         }
     }
@@ -448,6 +473,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Duplicate Aux Switch Options"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
 
@@ -458,6 +484,7 @@ bool Copter::pre_arm_checks(bool display_failure)
                 if (display_failure) {
                     gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check FS_THR_VALUE"));
                 }
+                unarmed_reason_id = 6;
                 return false;
             }
         }
@@ -467,6 +494,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check ANGLE_MAX"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
 
@@ -475,6 +503,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: ACRO_BAL_ROLL/PITCH"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
 
@@ -484,6 +513,7 @@ bool Copter::pre_arm_checks(bool display_failure)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: check range finder"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
 #endif
@@ -509,11 +539,13 @@ bool Copter::pre_arm_checks(bool display_failure)
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Throttle below Failsafe"));
     #endif
             }
+            unarmed_reason_id = 6;
             return false;
         }
     }
 
     // if we've gotten this far then pre arm checks have completed
+    unarmed_reason_id = 0;
     set_pre_arm_check(true);
     return true;
 }
@@ -569,6 +601,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Waiting for Nav Checks"));
         }
+        unarmed_reason_id = 3;
         return false;
     }
 
@@ -585,6 +618,9 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
     // return true if GPS is not required
     if (!gps_required) {
         AP_Notify::flags.pre_arm_gps_check = true;
+        if (unarmed_reason_id == 3) {
+            unarmed_reason_id = 0;
+        }
         return true;
     }
 
@@ -599,6 +635,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
         }
         }
         AP_Notify::flags.pre_arm_gps_check = false;
+        unarmed_reason_id = 3;
         return false;
     }
 
@@ -611,6 +648,7 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF compass variance"));
         }
+        unarmed_reason_id = 2;
         return false;
     }
 
@@ -620,12 +658,16 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: EKF-home variance"));
         }
         AP_Notify::flags.pre_arm_gps_check = false;
+        unarmed_reason_id = 3;
         return false;
     }
 
     // return true immediately if gps check is disabled
     if (!(g.arming_check == ARMING_CHECK_ALL || g.arming_check & ARMING_CHECK_GPS)) {
         AP_Notify::flags.pre_arm_gps_check = true;
+        if (unarmed_reason_id == 3) {
+            unarmed_reason_id = 0;
+        }
         return true;
     }
 
@@ -635,11 +677,15 @@ bool Copter::pre_arm_gps_checks(bool display_failure)
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: High GPS HDOP"));
         }
         AP_Notify::flags.pre_arm_gps_check = false;
+        unarmed_reason_id = 3;
         return false;
     }
 
     // if we got here all must be ok
     AP_Notify::flags.pre_arm_gps_check = true;
+    if (unarmed_reason_id == 3) {
+        unarmed_reason_id = 0;
+    }
     return true;
 }
 
@@ -659,12 +705,14 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Accelerometers not healthy"));
             }
+            unarmed_reason_id = 4;
             return false;
         }
         if(!ins.get_gyro_health_all()) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Gyros not healthy"));
             }
+            unarmed_reason_id = 4;
             return false;
         }
     }
@@ -674,6 +722,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Waiting for Nav Checks"));
         }
+        unarmed_reason_id = 3;
         return false;
     }
 
@@ -682,6 +731,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Mode not armable"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
 
@@ -705,6 +755,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     if (ap.using_interlock && motors.get_interlock()){
         gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Motor Interlock Enabled"));
         AP_Notify::flags.armed = false;
+        unarmed_reason_id = 6;
         return false;
     }
 
@@ -715,6 +766,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     // if we are using motor Estop switch, it must not be in Estop position
     } else if (check_if_auxsw_mode_used(AUXSW_MOTOR_ESTOP) && ap.motor_emergency_stop){
         gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Motor Emergency Stopped"));
+        unarmed_reason_id = 6;
         return false;
     }
 
@@ -730,6 +782,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Barometer not healthy"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
         // Check baro & inav alt are within 1m if EKF is operating in an absolute position mode.
@@ -741,6 +794,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Altitude disparity"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
     }
@@ -751,6 +805,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: check fence"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
 #endif
@@ -761,6 +816,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Leaning"));
             }
+            unarmed_reason_id = 6;
             return false;
         }
     }
@@ -771,6 +827,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Check Battery"));
             }
+            unarmed_reason_id = 5;
             return false;
         }
     }
@@ -821,6 +878,7 @@ bool Copter::arm_checks(bool display_failure, bool arming_from_gcs)
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("Arm: Safety Switch"));
         }
+        unarmed_reason_id = 6;
         return false;
     }
 
@@ -865,6 +923,8 @@ void Copter::init_disarm_motors()
     // reset target sonar altitude when disarmed
     target_sonar_alt = 0;
 #endif
+    // reset unarmed reason id when disarming
+    unarmed_reason_id = 0;
     // suspend logging
     if (!(g.log_bitmask & MASK_LOG_WHEN_DISARMED)) {
         DataFlash.EnableWrites(false);

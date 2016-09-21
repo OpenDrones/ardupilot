@@ -424,6 +424,7 @@ void Copter::check_usb_mux(void)
 #if FRSKY_TELEM_ENABLED == ENABLED
 void Copter::frsky_telemetry_send(void)
 {
+    frsky_telemetry.set_unarmed_reason(unarmed_reason_id);
     frsky_telemetry.send_frames((uint8_t)control_mode);
 }
 #endif

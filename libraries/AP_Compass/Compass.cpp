@@ -249,7 +249,7 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @Description: Enable or disable the third compass for determining heading.
     // @Values: 0:Disabled,1:Enabled
     // @User: Advanced
-    AP_GROUPINFO("USE3",    21, Compass, _state[2].use_for_yaw, 1),
+    AP_GROUPINFO("USE3",    21, Compass, _state[2].use_for_yaw, 0),
 
     // @Param: ORIENT3
     // @DisplayName: Compass3 orientation
@@ -273,6 +273,15 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @Increment: 0.01
     // @User: Standard
     AP_GROUPINFO("MNT_ANG",24, Compass, _compass_mount_angle, 0),
+
+    // @Param: MNT_ANGLE_DELTA
+    // @DisplayName: Compass mount delta angle 
+    // @Description: delta angle to the angle of compensating between the chip and mount
+    // @Range: 0 5
+    // @Units: degree
+    // @Increment: 0.1
+    // @User: Standard
+    AP_GROUPINFO("MNT_A_D",25, Compass, _compass_mount_angle_delta, COMPASS_MOUNT_ANGLE_DELTA_DEFAULT),
 
     AP_GROUPEND
 };
@@ -457,7 +466,7 @@ Compass::set_initial_location(int32_t latitude, int32_t longitude)
     // the declination based on the initial GPS fix
     if (_auto_declination) {
         // Set the declination based on the lat/lng from GPS
-        _declination.set(radians(
+        _declination.set_and_save(radians(
                 AP_Declination::get_declination(
                     (float)latitude / 10000000,
                     (float)longitude / 10000000)));
@@ -477,6 +486,20 @@ bool
 Compass::use_for_yaw(uint8_t i) const
 {
     return _state[i].use_for_yaw;
+}
+
+void
+Compass::set_compass_mnt_ang(int8_t plus_minus, bool save_to_eeprom)
+{
+    if (_compass_mount_angle_delta == 0) {
+        return;
+    }
+    _compass_mount_angle = constrain_float(_compass_mount_angle + plus_minus * ToRad(_compass_mount_angle_delta), -0.6f, 0.6f);
+    if (save_to_eeprom) {
+        _compass_mount_angle.set_and_save(_compass_mount_angle);
+    }else{
+        _compass_mount_angle.set(_compass_mount_angle);
+    }
 }
 
 void
@@ -516,7 +539,7 @@ Compass::calculate_heading(const Matrix3f &dcm_matrix) const
     float heading = constrain_float(atan2f(-headY,headX), -3.15f, 3.15f);
 
     // Declination correction (if supplied)
-    if( fabsf(_declination) > 0.0f )
+    if( fabsf(_declination + _compass_mount_angle) > 0.0f )
     {
         heading = heading + _declination + _compass_mount_angle;
         if (heading > PI)    // Angle normalization (-180 deg, 180 deg)

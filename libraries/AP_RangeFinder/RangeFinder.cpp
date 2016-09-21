@@ -31,14 +31,14 @@ const AP_Param::GroupInfo RangeFinder::var_info[] = {
     // @Description: What type of rangefinder device that is connected
     // @Values: 0:None,1:Analog,2:APM2-MaxbotixI2C,3:APM2-PulsedLightI2C,4:PX4-I2C,5:PX4-PWM,6:BBB-PRU,7:LightWareI2C,8:LightWareSerial
     // @User: Standard
-    AP_GROUPINFO("_TYPE",    0, RangeFinder, _type[0], 0),
+    AP_GROUPINFO("_TYPE",    0, RangeFinder, _type[0], 1),
 
     // @Param: _PIN
     // @DisplayName: Rangefinder pin
     // @Description: Analog pin that rangefinder is connected to. Set this to 0..9 for the APM2 analog pins. Set to 64 on an APM1 for the dedicated 'airspeed' port on the end of the board. Set to 11 on PX4 for the analog 'airspeed' port. Set to 15 on the Pixhawk for the analog 'airspeed' port.
     // @Values: -1:Not Used, 0:APM2-A0, 1:APM2-A1, 2:APM2-A2, 3:APM2-A3, 4:APM2-A4, 5:APM2-A5, 6:APM2-A6, 7:APM2-A7, 8:APM2-A8, 9:APM2-A9, 11:PX4-airspeed port, 15:Pixhawk-airspeed port, 64:APM1-airspeed port
     // @User: Standard
-    AP_GROUPINFO("_PIN",     1, RangeFinder, _pin[0], -1),
+    AP_GROUPINFO("_PIN",     1, RangeFinder, _pin[0], 14),
 
     // @Param: _SCALING
     // @DisplayName: Rangefinder scaling
@@ -46,7 +46,7 @@ const AP_Param::GroupInfo RangeFinder::var_info[] = {
     // @Units: meters/Volt
     // @Increment: 0.001
     // @User: Standard
-    AP_GROUPINFO("_SCALING", 2, RangeFinder, _scaling[0], 3.0f),
+    AP_GROUPINFO("_SCALING", 2, RangeFinder, _scaling[0], 4.84f),
 
     // @Param: _OFFSET
     // @DisplayName: rangefinder offset

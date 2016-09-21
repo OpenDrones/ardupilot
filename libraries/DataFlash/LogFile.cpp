@@ -1504,3 +1504,14 @@ void DataFlash_Class::Log_Write_RPM(const AP_RPM &rpm_sensor)
     };
     WriteBlock(&pkt, sizeof(pkt));
 }
+
+void DataFlash_Class::Log_Write_FlowS(const AP_FlowSensor &flow_sensor)
+{
+    struct log_FLOWS pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_FLOWS_MSG),
+        time_us     : hal.scheduler->micros64(),
+        flow1       : min(20, flow_sensor.get_flow(0)),
+        health1     : flow_sensor.healthy(0)
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}

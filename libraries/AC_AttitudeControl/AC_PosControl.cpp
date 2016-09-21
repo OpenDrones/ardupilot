@@ -33,23 +33,26 @@ const AP_Param::GroupInfo AC_PosControl::var_info[] PROGMEM = {
 // Note that the Vector/Matrix constructors already implicitly zero
 // their values.
 //
-AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav,
+AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav, const NavEKF& ekf,
                              const AP_Motors& motors, AC_AttitudeControl& attitude_control,
-                             AC_P& p_pos_z, AC_P& p_vel_z, AC_PID& pid_accel_z,
+                             AC_P& p_pos_z, AC_P& p_vel_z, AC_PID& pid_accel_z, AC_PID& pid_rate_z, 
                              AC_P& p_pos_xy, AC_PI_2D& pi_vel_xy) :
     _ahrs(ahrs),
     _inav(inav),
+    _ekf(ekf),
     _motors(motors),
     _attitude_control(attitude_control),
     _p_pos_z(p_pos_z),
     _p_vel_z(p_vel_z),
     _pid_accel_z(pid_accel_z),
+    _pid_rate_z(pid_rate_z),
     _p_pos_xy(p_pos_xy),
     _pi_vel_xy(pi_vel_xy),
     _dt(POSCONTROL_DT_400HZ),
     _dt_xy(POSCONTROL_DT_50HZ),
     _last_update_xy_ms(0),
     _last_update_z_ms(0),
+    _last_imu_ok_time_ms(0),
     _throttle_hover(POSCONTROL_THROTTLE_HOVER),
     _speed_down_cms(POSCONTROL_SPEED_DOWN),
     _speed_up_cms(POSCONTROL_SPEED_UP),
@@ -99,6 +102,7 @@ void AC_PosControl::set_dt(float delta_sec)
 
     // update rate controller's dt
     _pid_accel_z.set_dt(_dt);
+    _pid_rate_z.set_dt(_dt);
 
     // update rate z-axis velocity error and accel error filters
     _vel_error_filter.set_cutoff_frequency(POSCONTROL_VEL_ERROR_CUTOFF_FREQ);
@@ -250,6 +254,7 @@ void AC_PosControl::relax_alt_hold_controllers(float throttle_setting)
     _accel_target.z = -(_ahrs.get_accel_ef_blended().z + GRAVITY_MSS) * 100.0f;
     _flags.reset_accel_to_throttle = true;
     _pid_accel_z.set_integrator(throttle_setting);
+    _pid_rate_z.set_integrator(throttle_setting);
 }
 
 // get_alt_error - returns altitude error in cm
@@ -313,6 +318,7 @@ void AC_PosControl::init_takeoff()
 
     // shift difference between last motor out and hover throttle into accelerometer I
     _pid_accel_z.set_integrator(_motors.get_throttle()-_throttle_hover);
+    _pid_rate_z.set_integrator(_motors.get_throttle()-_throttle_hover);
 }
 
 // is_active_z - returns true if the z-axis position controller has been run very recently
@@ -406,8 +412,7 @@ void AC_PosControl::pos_to_rate_z()
 void AC_PosControl::rate_to_accel_z()
 {
     const Vector3f& curr_vel = _inav.get_velocity();
-    float p;                                // used to capture pid values for logging
-
+    float p,ratio;                             // used to capture pid values for logging
     // reset last velocity target to current target
     if (_flags.reset_rate_to_accel_z) {
         _vel_last.z = _vel_target.z;
@@ -444,9 +449,49 @@ void AC_PosControl::rate_to_accel_z()
 
     // consolidate and constrain target acceleration
     _accel_target.z = _accel_feedforward.z + p;
+    
+    // get imu ratio
+    _ekf.getIMU1Weighting(ratio);
+    if (ratio >= POSCONTROL_RATIO_THRESHOLD && ratio <= (1 - POSCONTROL_RATIO_THRESHOLD)) {
+        _last_imu_ok_time_ms = hal.scheduler->millis();
+    } else if (hal.scheduler->millis() - _last_imu_ok_time_ms > POSCONTROL_IMU_ERROR_TIMEOUT_MS) {
+        rate_to_throttle(_vel_error.z);
+        _flags.reset_accel_to_throttle = true;
+        return;
+    }
 
     // set target for accel based throttle controller
     accel_to_throttle(_accel_target.z);
+}
+
+// rate_to_throttle - alt hold's rate controller 
+// calculates a desired throttle sent to the motors when imu error
+void AC_PosControl::rate_to_throttle(float vel_error_z)
+{
+    float p,i,d;
+
+    // set input to PID
+    _pid_rate_z.set_input_filter_d(vel_error_z);
+
+    // separately calculate p, i, d values
+    p = constrain_float(_pid_rate_z.get_p(), -200, 200);
+
+    // get i term
+    i = _pid_rate_z.get_integrator();
+
+    // update i term as long as we haven't breached the limits or the I term will certainly reduce
+    // To-Do: should this be replaced with limits check from attitude_controller?
+    if ((!_motors.limit.throttle_lower && !_motors.limit.throttle_upper) || (i>0&&vel_error_z<0) || (i<0&&vel_error_z>0)) {
+        i = _pid_rate_z.get_i();
+    }
+
+    // get d term
+    d = _pid_rate_z.get_d();
+
+    float thr_out = p+i+d+_throttle_hover;
+
+    // send throttle to attitude controller with angle boost
+    _attitude_control.set_throttle_out(thr_out, true, POSCONTROL_THROTTLE_CUTOFF_FREQ);
 }
 
 // accel_to_throttle - alt hold's acceleration controller

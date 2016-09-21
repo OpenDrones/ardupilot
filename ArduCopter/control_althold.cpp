@@ -118,6 +118,9 @@ void Copter::althold_run()
         // get take-off adjusted pilot and takeoff climb rates
         takeoff_get_climb_rates(target_climb_rate, takeoff_climb_rate);
 
+        // set flag to recalc target sonar altitude during take-off
+        flag_reset_target_sonar_alt = true;
+
         // call attitude controller
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw_smooth(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
 

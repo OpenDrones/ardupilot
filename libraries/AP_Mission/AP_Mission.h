@@ -398,6 +398,9 @@ public:
     // update destination position
     void update_wpcruise_target(Location &);
 
+    // return distance_cm of wpcruise
+    int16_t get_distance_cm() { return _distance_cm; }
+
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
 

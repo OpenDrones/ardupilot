@@ -433,10 +433,13 @@ void Copter::three_hz_loop()
 
 #if SPRAYER == ENABLED
     sprayer.update();
-    if (!AP_Notify::flags.drain_off && sprayer.get_drain_off()) {
+    if (!ap.drain_off && sprayer.get_drain_off()) {
         Log_Write_Event(DATA_SPRAY_DRAIN_OFF);
     }
-    AP_Notify::flags.drain_off = sprayer.get_drain_off();
+    ap.drain_off = sprayer.get_drain_off();
+    if (g.notify_bitmask & MASK_NOTIFY_DRAINOFF) {
+        AP_Notify::flags.drain_off = sprayer.get_drain_off();
+    }
 #endif
 
     update_events();
@@ -630,8 +633,13 @@ void Copter::update_altitude()
 
     // read in sonar altitude
     sonar_alt           = read_sonar();
-
-    frsky_telemetry.calc_sonar_alt(sonar_alt);
+#if FRSKY_TELEM_ENABLED == ENABLED
+    if (motors.armed()) {
+        frsky_telemetry.calc_target_sonar_alt(target_sonar_alt);
+    } else {
+        frsky_telemetry.calc_target_sonar_alt(sonar_alt);
+    }
+#endif
     
     // write altitude info to dataflash logs
     if (should_log(MASK_LOG_CTUN)) {

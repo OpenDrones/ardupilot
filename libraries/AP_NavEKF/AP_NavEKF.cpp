@@ -41,7 +41,7 @@
 #define MAG_GATE_DEFAULT        3
 #define MAG_CAL_DEFAULT         1
 #define GLITCH_ACCEL_DEFAULT    100
-#define GLITCH_RADIUS_DEFAULT   25
+#define GLITCH_RADIUS_DEFAULT   20
 #define FLOW_MEAS_DELAY         10
 #define FLOW_NOISE_DEFAULT      0.25f
 #define FLOW_GATE_DEFAULT       3

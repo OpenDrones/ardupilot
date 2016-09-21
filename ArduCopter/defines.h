@@ -68,7 +68,8 @@ enum aux_sw_func {
     AUXSW_BRAKE =               33, // Brake flight mode
     AUXSW_CRUISE =              34, // Cruise flight mode
     AUXSW_WPCRUISE =            35, // WpCruise flight mode
-    AUXSW_CLEAR_AND_SAVE_WP =   36  // clear mission first and then save mission waypoint
+    AUXSW_CLEAR_AND_SAVE_WP =   36, // clear mission first and then save mission waypoint
+    AUXSW_COMPASS_MNT_ANG_D =   37  // set compass mount error angle with delta angle
 };
 
 // Frame types
@@ -287,6 +288,13 @@ enum Wpcruisestate {
 #define MASK_LOG_IMU_FAST               (1UL<<18)
 #define MASK_LOG_IMU_RAW                (1UL<<19)
 #define MASK_LOG_ANY                    0xFFFF
+
+// BITMASK - notify (to be added)
+#define MASK_NOTIFY_ALWAYS              (1<<0)
+#define MASK_NOTIFY_BATT                (1<<1)
+#define MASK_NOTIFY_EKF                 (1<<2)
+#define MASK_NOTIFY_DRAINOFF            (1<<3)
+#define MASK_NOTIFY_CRUISE_LOIT         (1<<4)
 
 // DATA - event logging
 #define DATA_MAVLINK_FLOAT                  1

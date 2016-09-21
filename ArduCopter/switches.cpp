@@ -389,10 +389,10 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             if (ch_flag == AUX_SWITCH_HIGH) {
                 sonar_enabled = true;
                 if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
-                    flag_reset_target_sonar_alt = true;
+                    flag_reset_target_sonar_alt = false;
                     target_sonar_alt = sonar_alt;
                 } else {
-                    flag_reset_target_sonar_alt = false;
+                    flag_reset_target_sonar_alt = true;
                 }
             }else{
                 sonar_enabled = false;
@@ -676,6 +676,16 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             }
             break;
 #endif
+
+        case AUXSW_COMPASS_MNT_ANG_D:
+            // if switch high add compass mount angle delta
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                compass.set_compass_mnt_ang(-1, true);
+            } else if (ch_flag == AUX_SWITCH_LOW) {
+                // if switch low minus compass mount angle delta
+                compass.set_compass_mnt_ang(1, true);
+            }
+            break;
     }
 }
 
@@ -734,11 +744,6 @@ void Copter::save_add_waypoint()
     // set new waypoint to current location
     cmd.content.location = current_loc;
     cmd.id = MAV_CMD_NAV_WAYPOINT;
-
-    // if altitude control with sonar in auto mode, recalculate target altitude
-    if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        cmd.content.location.alt = target_sonar_alt;
-    }
 
         // add or replace command
         if(mission.num_commands() == 4) {
@@ -808,11 +813,6 @@ void Copter::clear_and_save_waypoint()
     // set new waypoint to current location
     cmd.content.location = current_loc;
     cmd.id = MAV_CMD_NAV_WAYPOINT;
-
-    // if altitude control with sonar in auto mode, recalculate target altitude
-    if (g.sonar_alt_wp != 0 && sonar_enabled) {
-        cmd.content.location.alt = target_sonar_alt;
-    }
 
     if (mission.add_cmd(cmd)) {
         Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);

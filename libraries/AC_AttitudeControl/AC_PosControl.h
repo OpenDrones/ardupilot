@@ -44,16 +44,18 @@
 #define POSCONTROL_JERK_RATIO                   1.0f    // Defines the time it takes to reach the requested acceleration
 
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
+#define POSCONTROL_IMU_ERROR_TIMEOUT_MS         2000
 #define POSCONTROL_ACCEL_Z_MAX_CM               350.0f
+#define POSCONTROL_RATIO_THRESHOLD              0.1f
 
 class AC_PosControl
 {
 public:
 
     /// Constructor
-    AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav,
+    AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav, const NavEKF& ekf,
                   const AP_Motors& motors, AC_AttitudeControl& attitude_control,
-                  AC_P& p_pos_z, AC_P& p_vel_z, AC_PID& pid_accel_z,
+                  AC_P& p_pos_z, AC_P& p_vel_z, AC_PID& pid_accel_z, AC_PID& pid_rate_z,
                   AC_P& p_pos_xy, AC_PI_2D& pi_vel_xy);
 
     // xy_mode - specifies behavior of xy position controller
@@ -325,6 +327,9 @@ private:
     // accel_to_throttle - alt hold's acceleration controller
     void accel_to_throttle(float accel_target_z);
 
+    // rate_to_throttle alt hold's rate controller directly sent to motors when imu error
+    void rate_to_throttle(float vel_error_z);
+
     ///
     /// xy controller private methods
     ///
@@ -353,6 +358,7 @@ private:
     // references to inertial nav and ahrs libraries
     const AP_AHRS&              _ahrs;
     const AP_InertialNav&       _inav;
+    const NavEKF&               _ekf;
     const AP_Motors&            _motors;
     AC_AttitudeControl&         _attitude_control;
 
@@ -360,17 +366,20 @@ private:
     AC_P&       _p_pos_z;
     AC_P&       _p_vel_z;
     AC_PID&     _pid_accel_z;
+    AC_PID&     _pid_rate_z;
     AC_P&	    _p_pos_xy;
     AC_PI_2D&   _pi_vel_xy;
 
     // parameters
     AP_Float    _accel_xy_filt_hz;      // XY acceleration filter cutoff frequency
+    AP_Float    _ratio_threhold;        // IMU ratio threshold
     AP_Float    _accel_z_max_meas;        // max Z accel measured
     // internal variables
     float       _dt;                    // time difference (in seconds) between calls from the main program
     float       _dt_xy;                 // time difference (in seconds) between update_xy_controller and update_vel_controller_xyz calls
     uint32_t    _last_update_xy_ms;     // system time of last update_xy_controller call
     uint32_t    _last_update_z_ms;      // system time of last update_z_controller call
+    uint32_t    _last_imu_ok_time_ms;   // system time of last imu ok 
     float       _throttle_hover;        // estimated throttle required to maintain a level hover
     float       _speed_down_cms;        // max descent rate in cm/s
     float       _speed_up_cms;          // max climb rate in cm/s

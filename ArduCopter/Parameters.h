@@ -105,6 +105,7 @@ public:
 
         // Use rangefinder or not to in auto flight mode
         k_param_sonar_alt_wp,
+        
         k_param_ch8_option,
         k_param_arming_check,
         k_param_sprayer,
@@ -147,7 +148,8 @@ public:
         k_param_altitude_limit,         // deprecated - remove
         k_param_fence,
         k_param_gps_glitch,             // deprecated
-        k_param_baro_glitch,            // 71 - deprecated
+
+        k_param_notify_bitmask,         // 71
 
         //
         // 75: Singlecopter, CoaxCopter
@@ -337,6 +339,7 @@ public:
         k_param_pid_optflow_pitch,      // remove
         k_param_acro_balance_roll_old,  // remove
         k_param_acro_balance_pitch_old, // remove
+		k_param_pid_rate_z,
         k_param_pid_accel_z,
         k_param_acro_balance_roll,
         k_param_acro_balance_pitch,
@@ -347,7 +350,7 @@ public:
         k_param_fs_ekf_action,
         k_param_rtl_climb_min,
         k_param_rpm_sensor,
-        k_param_autotune_min_d, // 251
+        k_param_autotune_min_d, // 252
         k_param_flow_sensor,
 
         // 254,255: reserved
@@ -423,6 +426,7 @@ public:
     // Misc
     //
     AP_Int32        log_bitmask;
+    AP_Int16        notify_bitmask;
     AP_Int8         esc_calibrate;
     AP_Int8         radio_tuning;
     AP_Int16        radio_tuning_high;
@@ -501,6 +505,7 @@ public:
 
     AC_P                    p_vel_z;
     AC_PID                  pid_accel_z;
+    AC_PID                  pid_rate_z;
 
     AC_P                    p_pos_xy;
     AC_P                    p_stabilize_roll;
@@ -571,7 +576,7 @@ public:
 
         p_vel_z                 (VEL_Z_P),
         pid_accel_z             (ACCEL_Z_P,       ACCEL_Z_I,        ACCEL_Z_D,      ACCEL_Z_IMAX,       ACCEL_Z_FILT_HZ,    MAIN_LOOP_SECONDS),
-
+        pid_rate_z              (RATE_Z_P,        RATE_Z_I,         RATE_Z_D,       RATE_Z_IMAX,        RATE_Z_FILT_HZ,     MAIN_LOOP_SECONDS),
         // P controller	        initial P
         //----------------------------------------------------------------------
         p_pos_xy                (POS_XY_P),
