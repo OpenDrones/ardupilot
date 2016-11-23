@@ -6,7 +6,8 @@
 #pragma once
 
 #include <AP_NavEKF/AP_Nav_Common.h>              // definitions shared by inertial and ekf nav filters
-
+#include <Filter/Filter.h>                        // filter library
+#include <AP_Param/AP_Param.h>
 class AP_InertialNav_NavEKF : public AP_InertialNav
 {
 public:
@@ -15,7 +16,9 @@ public:
         AP_InertialNav(),
         _haveabspos(false),
         _ahrs_ekf(ahrs)
-        {}
+        {
+            AP_Param::setup_object_defaults(this, var_info);
+        }
 
     /**
        update internal state
@@ -111,6 +114,11 @@ public:
      */
     float       get_velocity_z() const;
 
+    // altitude correction calculation in cm according to current velocity
+    float      calc_alt_corretion(float dt);
+
+    static const struct AP_Param::GroupInfo var_info[];
+
 private:
     Vector3f _relpos_cm;   // NEU
     Vector3f _velocity_cm; // NEU
@@ -118,4 +126,17 @@ private:
     struct Location _abspos;
     bool _haveabspos;
     AP_AHRS_NavEKF &_ahrs_ekf;
+
+    // parameters to calculate altitude correction
+    AP_Int8 _alt_corr_fac_a;
+    AP_Int8 _alt_corr_fac_b;
+    AP_Int8 _alt_corr_fac_af;
+    AP_Int8 _alt_corr_fac_bf;
+    AP_Int16 _alt_corr_max;
+    AP_Float _alt_corr_ffreq;               // alt correction lowpass filter frequency
+    AP_Float _alt_c_vel_ffreq;               // velocity lowpass filter frequency
+
+    LowPassFilterFloat _alt_corr_filter;    // alt correction lowpass filter
+    LowPassFilterFloat _alt_c_vel_filter;   // velocity lowpass filter 
+     
 };

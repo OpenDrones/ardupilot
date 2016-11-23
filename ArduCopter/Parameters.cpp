@@ -731,6 +731,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Path: ../libraries/AP_InertialSensor/AP_InertialSensor.cpp
     GOBJECT(ins,            "INS_", AP_InertialSensor),
 
+    // @Group: INA__
+    // @Path: ../libraries/AP_InertialNav_NavEKF/AP_InertialNav_NavEKF.cpp
+    GOBJECT(inertial_nav,           "INA_", AP_InertialNav_NavEKF),
+
     // @Group: WPNAV_
     // @Path: ../libraries/AC_WPNav/AC_WPNav.cpp
     GOBJECT(wp_nav, "WPNAV_",       AC_WPNav),
