@@ -602,6 +602,20 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             }
             break;
 #endif
+
+#if WPCRUISE_ENABLED == ENABLED
+        case AUXSW_WPCRUISE:
+            // wpcruise flight mode
+            if (ch_flag == AUX_SWITCH_HIGH) {
+            	set_mode(WPCRUISE, MODE_REASON_TX_COMMAND);
+            } else {
+                // return to flight mode switch's flight mode if we are currently in WPCRUISE
+                if (control_mode == WPCRUISE) {
+                    reset_control_switch();
+                }
+            }
+            break;
+#endif
     }
 }
 
