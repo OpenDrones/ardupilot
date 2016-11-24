@@ -36,6 +36,7 @@
 #define AP_MISSION_FIRST_REAL_COMMAND       1       // command #0 reserved to hold home position
 
 #define AP_MISSION_RESTART_DEFAULT          0       // resume the mission from the last command run by default
+#define AP_MISSION_DISTANCE_DEFAULT         400     // default distance in AB auto-waypoint mode
 
 /// @class    AP_Mission
 /// @brief    Object managing Mission
@@ -421,6 +422,8 @@ public:
     // return its index.  Returns 0 if no appropriate DO_LAND_START point can
     // be found.
     uint16_t get_landing_sequence_start();
+    // return distance_cm of wpcruise
+    int16_t get_distance_cm() { return _distance_cm; }
 
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
@@ -488,6 +491,7 @@ private:
     // parameters
     AP_Int16                _cmd_total;  // total number of commands in the mission
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
+    AP_Int16                _distance_cm;  // distance in AB auto-waypoint mode
 
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started

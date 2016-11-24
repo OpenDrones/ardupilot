@@ -20,6 +20,11 @@ const AP_Param::GroupInfo AP_Mission::var_info[] = {
     // @Values: 0:Resume Mission, 1:Restart Mission
     // @User: Advanced
     AP_GROUPINFO("RESTART",  1, AP_Mission, _restart, AP_MISSION_RESTART_DEFAULT),
+    // @Param: DISTANCE
+    // @DisplayName: Offset distance of mission in auto spraying mode
+    // @Description: 
+    // @Values:   unit:cm 
+    AP_GROUPINFO("DISTANCE",  2, AP_Mission, _distance_cm, AP_MISSION_DISTANCE_DEFAULT),
 
     AP_GROUPEND
 };
