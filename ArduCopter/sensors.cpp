@@ -92,6 +92,15 @@ void Copter::rpm_update(void)
     }
 }
 
+/*
+  update flow sensors
+ */
+void Copter::flow_sensor_update(void)
+{
+    flow_sensor.update();
+	// log flow rate if there's flow sensor. TBD
+}
+
 // initialise compass
 void Copter::init_compass()
 {

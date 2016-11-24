@@ -899,6 +899,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: RPM
     // @Path: ../libraries/AP_RPM/AP_RPM.cpp
     GOBJECT(rpm_sensor, "RPM", AP_RPM),
+	
+	// @Group: FlowSensor
+    // @Path: ../libraries/AP_FlowSensor/AP_FlowSensor.cpp
+    GOBJECT(flow_sensor, "FLOWS", AP_FlowSensor),
 
     // @Group: ADSB_
     // @Path: ../libraries/AP_ADSB/AP_ADSB.cpp
