@@ -26,6 +26,20 @@ const AP_Param::GroupInfo AP_Mission::var_info[] = {
     // @Values:   unit:cm 
     AP_GROUPINFO("DISTANCE",  2, AP_Mission, _distance_cm, AP_MISSION_DISTANCE_DEFAULT),
 
+    // @Param: COUNT
+    // @DisplayName: 
+    // @Description: counter to calculate destination position in AB auto-waypoint mode
+    // @Values: 
+    // @User: Advanced, not change mannually
+    AP_GROUPINFO("COUNT",  3, AP_Mission, _count, AP_MISSION_COUNT_DEFAULT),
+
+    // @Param: OFFSET_DRT
+    // @DisplayName: 
+    // @Description: offset direction in AB auto-waypoint mode
+    // @Values: -1, 1
+    // @User: Advanced, not change mannually
+    AP_GROUPINFO("OFFSET_DRT",  4, AP_Mission, _offset_direction, 1),
+
     AP_GROUPEND
 };
 
@@ -1620,3 +1634,50 @@ uint16_t AP_Mission::get_landing_sequence_start()
     return landing_start_index;
 }
 
+// calc destination position used in waypoint cruise mode
+bool AP_Mission::calc_destination_pos(Location &loc)
+{
+    uint8_t index_count = _count % 4;
+    uint8_t distance_mount;
+    int32_t bearing_offset;
+    if (_count % 2)
+    {
+        distance_mount = (_count + 1)/2;
+    } else {
+        distance_mount = _count/2;
+    }
+    // read point A and B from storage
+    Mission_Command cmd1, cmd2;
+    if (!read_cmd_from_storage(AP_WAYPOINT_CRUISE_A_INDEX,cmd1) || !read_cmd_from_storage(AP_WAYPOINT_CRUISE_B_INDEX,cmd2)) {
+        return false;
+    }
+
+    bearing_offset = get_bearing_cd(cmd1.content.location, cmd2.content.location) + _offset_direction * 9000;
+    if (bearing_offset < 0) bearing_offset += 36000;
+    if (bearing_offset > 36000) bearing_offset -= 36000;
+
+    switch(index_count) {
+        // calc destination according to point B from storage
+        case 0:
+        case 1:
+        loc = cmd2.content.location;
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100.0);
+        break;
+
+        // calc destination according to point A from storage
+        case 2:
+        case 3:
+        loc = cmd1.content.location;
+        location_update(loc, bearing_offset/100, distance_mount*_distance_cm/100.0);
+        break;
+    }
+    return true;
+}
+
+// update target position in waypoint cruise mode
+void AP_Mission::update_wpcruise_target(Location &loc)
+{
+    if(calc_destination_pos(loc)) {
+        _count.set_and_save(_count + 1);
+    }
+}

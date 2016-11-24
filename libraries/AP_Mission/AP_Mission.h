@@ -37,6 +37,9 @@
 
 #define AP_MISSION_RESTART_DEFAULT          0       // resume the mission from the last command run by default
 #define AP_MISSION_DISTANCE_DEFAULT         400     // default distance in AB auto-waypoint mode
+#define AP_MISSION_COUNT_DEFAULT            1       // default counter in AB auto-waypoint mode
+#define AP_WAYPOINT_CRUISE_A_INDEX          1       // position of point A in memory
+#define AP_WAYPOINT_CRUISE_B_INDEX          2       // position of point B in memory
 
 /// @class    AP_Mission
 /// @brief    Object managing Mission
@@ -320,12 +323,18 @@ public:
     /// reset - reset mission to the first command
     void reset();
 
+    // set AB WpCruise offset direction from pilot roll input
+    void set_wp_direction(int8_t roll_direction) { _offset_direction.set_and_save(roll_direction); }
+    
     /// clear - clears out mission
     ///     returns true if mission was running so it could not be cleared
     bool clear();
 
     /// truncate - truncate any mission items beyond given index
     void truncate(uint16_t index);
+
+    // _count = _count - 1
+    void truncate_counter_one() { _count.set_and_save(MAX(1,_count - 1)); }
 
     /// update - ensures the command queues are loaded with the next command and calls main programs command_init and command_verify functions to progress the mission
     ///     should be called at 10hz or higher
@@ -422,6 +431,10 @@ public:
     // return its index.  Returns 0 if no appropriate DO_LAND_START point can
     // be found.
     uint16_t get_landing_sequence_start();
+
+    // update destination position
+    void update_wpcruise_target(Location &);
+
     // return distance_cm of wpcruise
     int16_t get_distance_cm() { return _distance_cm; }
 
@@ -485,6 +498,9 @@ private:
     /// command list will be cleared if they do not match
     void check_eeprom_version();
 
+    // calc destination position used in waypoint cruise mode
+    bool calc_destination_pos(Location &);
+
     // references to external libraries
     const AP_AHRS&   _ahrs;      // used only for home position
 
@@ -492,6 +508,8 @@ private:
     AP_Int16                _cmd_total;  // total number of commands in the mission
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
     AP_Int16                _distance_cm;  // distance in AB auto-waypoint mode
+    AP_Int16                _count;     // count of waypoint in AB auto-waypoint mode
+    AP_Int8                 _offset_direction; // offset direction in AB auto-waypoint mode
 
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started
