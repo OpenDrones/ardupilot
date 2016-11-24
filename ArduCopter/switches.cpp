@@ -588,6 +588,20 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 Log_Write_Event(DATA_AVOIDANCE_ADSB_DISABLE);
             }
             break;
+
+#if CRUISE_ENABLED == ENABLED
+        case AUXSW_CRUISE:
+            // cruise flight mode
+            if (ch_flag == AUX_SWITCH_HIGH) {
+            	set_mode(CRUISE, MODE_REASON_TX_COMMAND);
+            } else {
+                // return to flight mode switch's flight mode if we are currently in CRUISE
+                if (control_mode == CRUISE) {
+                    reset_control_switch();
+                }
+            }
+            break;
+#endif
     }
 }
 

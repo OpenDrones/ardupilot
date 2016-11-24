@@ -63,11 +63,12 @@ enum aux_sw_func {
     AUXSW_MOTOR_ESTOP =         31, // Emergency Stop Switch
     AUXSW_MOTOR_INTERLOCK =     32, // Motor On/Off switch
     AUXSW_BRAKE =               33, // Brake flight mode
-	AUXSW_RELAY2 =              34, // Relay2 pin on/off (in Mission planner set CH8_OPT  = 34)
-    AUXSW_RELAY3 =              35, // Relay3 pin on/off (in Mission planner set CH9_OPT  = 35)
-    AUXSW_RELAY4 =              36, // Relay4 pin on/off (in Mission planner set CH10_OPT = 36)
-    AUXSW_THROW =               37,  // change to THROW flight mode
-    AUXSW_AVOID_ADSB =          38,  // enable AP_Avoidance library
+    AUXSW_CRUISE =              34, // Cruise flight mode
+	AUXSW_RELAY2 =              35, // Relay2 pin on/off (in Mission planner set CH8_OPT  = 35)
+    AUXSW_RELAY3 =              36, // Relay3 pin on/off (in Mission planner set CH9_OPT  = 36)
+    AUXSW_RELAY4 =              37, // Relay4 pin on/off (in Mission planner set CH10_OPT = 37)
+    AUXSW_THROW =               38,  // change to THROW flight mode
+    AUXSW_AVOID_ADSB =          39,  // enable AP_Avoidance library
     AUXSW_SWITCH_MAX,
 };
 
