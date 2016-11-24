@@ -108,6 +108,7 @@ enum control_mode_t {
     AVOID_ADSB =   19,  // automatic avoidance of obstacles in the macro scale - e.g. full-sized aircraft
     GUIDED_NOGPS = 20,  // guided mode but only accepts attitude and altitude
 	CRUISE =       21,  // cruise at a fixed speed and direction
+	WPCRUISE =     22,   // AB point auto-nav waypoint cruise mode
 };
 
 enum mode_reason_t {
@@ -255,6 +256,14 @@ enum FlipState {
     Flip_Pitch_B,
     Flip_Recover,
     Flip_Abandon
+};
+
+// Wpcruise states
+enum Wpcruisestate {
+    Return_Bp_Loiter,
+    Return_Bp_Wp_Nav,
+    Waypoint_Nav,
+	Wpcruise_loiter  
 };
 
 // Throw stages

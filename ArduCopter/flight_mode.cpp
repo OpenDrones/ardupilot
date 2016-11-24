@@ -101,6 +101,10 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
             success = cruise_init(ignore_checks);
             break;
 			
+		case WPCRUISE:
+            success = wpcruise_init(ignore_checks);
+            break;
+			
         case THROW:
             success = throw_init(ignore_checks);
             break;
@@ -241,6 +245,10 @@ void Copter::update_flight_mode()
             cruise_run();
             break;
 			
+		case WPCRUISE:
+            wpcruise_run();
+            break;
+			
 		case THROW:
             throw_run();
             break;
@@ -276,6 +284,14 @@ void Copter::exit_mode(control_mode_t old_control_mode, control_mode_t new_contr
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED
     }
+
+#if WPCRUISE_ENABLED == ENABLED
+    // save break point when we leave wpcruise mode
+    if (old_control_mode == WPCRUISE && (WpCruise_state == Waypoint_Nav || WpCruise_state == Wpcruise_loiter)) {
+        mission.truncate_counter_one();
+        flag_recalc_wp_offset_direction = false;
+    }
+#endif
 
     // smooth throttle transition when switching from manual to automatic flight modes
     if (mode_has_manual_throttle(old_control_mode) && !mode_has_manual_throttle(new_control_mode) && motors.armed() && !ap.land_complete) {
@@ -319,6 +335,7 @@ bool Copter::mode_requires_GPS(control_mode_t mode)
         case POSHOLD:
         case BRAKE:
         case CRUISE:
+		case WPCRUISE:
 		case AVOID_ADSB:
         case THROW:
             return true;
@@ -358,6 +375,7 @@ void Copter::notify_flight_mode(control_mode_t mode)
         case RTL:
         case CIRCLE:
 		case CRUISE:
+		case WPCRUISE:
         case AVOID_ADSB:
         case GUIDED_NOGPS:
         case LAND:
@@ -424,6 +442,9 @@ void Copter::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         break;
     case CRUISE:
 		port->print("CRUISE");
+        break;
+	case WPCRUISE:
+		port->print("WPCRUISE");
         break;
 	case THROW:
         port->print("THROW");

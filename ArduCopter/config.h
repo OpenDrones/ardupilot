@@ -569,6 +569,12 @@
 #ifndef CRUISE_ENABLED
  # define CRUISE_ENABLED               ENABLED // Cruise flight mode enabled by default
 #endif
+
+// wpcruise flight mode (AB point mode)
+#ifndef WPCRUISE_ENABLED
+ # define WPCRUISE_ENABLED           ENABLED // wpcruise flight mode enabled by default
+#endif
+
 // Throttle control gains
 //
 

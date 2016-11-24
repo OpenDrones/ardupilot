@@ -197,7 +197,10 @@ private:
         LowPassFilterFloat alt_cm_filt; // altitude filter
     } rangefinder_state = { false, false, 0, 0 };
 
-    AP_RPM rpm_sensor;
+    bool flag_recalc_wp_offset_direction;
+    Wpcruisestate WpCruise_state;
+    
+	AP_RPM rpm_sensor;
 
     // Inertial Navigation EKF
     NavEKF EKF{&ahrs, barometer, rangefinder};
@@ -847,6 +850,10 @@ private:
     void update_cruise_des_fwd(float, Vector3f&);
     void update_cruise_des_rgt(float, Vector3f&);
     bool reach_cruise_des(Vector3f&);
+    bool wpcruise_init(bool ignore_checks);
+    void wpcruise_run();
+    void calc_breakpoint_destination(Vector3f&);
+    void update_waypoint_destination(Vector3f&);
     bool drift_init(bool ignore_checks);
     void drift_run();
     float get_throttle_assist(float velz, float pilot_throttle_scaled);
