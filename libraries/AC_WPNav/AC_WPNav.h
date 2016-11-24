@@ -155,7 +155,10 @@ public:
     ///     returns false on failure (likely caused by missing terrain data)
     bool set_wp_origin_and_destination(const Vector3f& origin, const Vector3f& destination, bool terrain_alt = false);
 
-    /// shift_wp_origin_to_current_pos - shifts the origin and destination so the origin starts at the current position
+    // set wp xy position for origin and destination
+	bool set_wp_xy_origin_and_destination(const Vector3f& destination);
+	
+	/// shift_wp_origin_to_current_pos - shifts the origin and destination so the origin starts at the current position
     ///     used to reset the position just before takeoff
     ///     relies on set_wp_destination or set_wp_origin_and_destination having been called first
     void shift_wp_origin_to_current_pos();
@@ -178,6 +181,9 @@ public:
 
     /// update_wpnav - run the wp controller - should be called at 100hz or higher
     bool update_wpnav();
+    
+	// run the waypoint xy controller
+	bool update_wpnav_xy();
 
     // check_wp_leash_length - check recalc_wp_leash flag and calls calculate_wp_leash_length() if necessary
     //  should be called after _pos_control.update_xy_controller which may have changed the position controller leash lengths
@@ -250,6 +256,8 @@ public:
 
     /// advance_wp_target_along_track - move target location along track from origin to destination
     bool advance_wp_target_along_track(float dt);
+    // move target xy location along track from origin to destination
+	bool advance_wp_xy_target_along_track(float dt);
 
     static const struct AP_Param::GroupInfo var_info[];
 
