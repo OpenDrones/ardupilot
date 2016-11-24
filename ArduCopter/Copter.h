@@ -842,6 +842,11 @@ private:
     void brake_timeout_to_loiter_ms(uint32_t timeout_ms);
     bool circle_init(bool ignore_checks);
     void circle_run();
+    bool cruise_init(bool ignore_checks);
+    void cruise_run();
+    void update_cruise_des_fwd(float, Vector3f&);
+    void update_cruise_des_rgt(float, Vector3f&);
+    bool reach_cruise_des(Vector3f&);
     bool drift_init(bool ignore_checks);
     void drift_run();
     float get_throttle_assist(float velz, float pilot_throttle_scaled);

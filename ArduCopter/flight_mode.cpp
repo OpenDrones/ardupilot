@@ -97,6 +97,10 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
             success = brake_init(ignore_checks);
             break;
 
+		case CRUISE:
+            success = cruise_init(ignore_checks);
+            break;
+			
         case THROW:
             success = throw_init(ignore_checks);
             break;
@@ -233,7 +237,11 @@ void Copter::update_flight_mode()
             brake_run();
             break;
 
-        case THROW:
+        case CRUISE:
+            cruise_run();
+            break;
+			
+		case THROW:
             throw_run();
             break;
 
@@ -310,7 +318,8 @@ bool Copter::mode_requires_GPS(control_mode_t mode)
         case DRIFT:
         case POSHOLD:
         case BRAKE:
-        case AVOID_ADSB:
+        case CRUISE:
+		case AVOID_ADSB:
         case THROW:
             return true;
         default:
@@ -348,6 +357,7 @@ void Copter::notify_flight_mode(control_mode_t mode)
         case GUIDED:
         case RTL:
         case CIRCLE:
+		case CRUISE:
         case AVOID_ADSB:
         case GUIDED_NOGPS:
         case LAND:
@@ -412,7 +422,10 @@ void Copter::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case BRAKE:
         port->print("BRAKE");
         break;
-    case THROW:
+    case CRUISE:
+		port->print("CRUISE");
+        break;
+	case THROW:
         port->print("THROW");
         break;
     case AVOID_ADSB:

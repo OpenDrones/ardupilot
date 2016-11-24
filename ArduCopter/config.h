@@ -565,6 +565,10 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
+// Cruise flight mode
+#ifndef CRUISE_ENABLED
+ # define CRUISE_ENABLED               ENABLED // Cruise flight mode enabled by default
+#endif
 // Throttle control gains
 //
 
