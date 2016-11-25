@@ -20,6 +20,7 @@
 #include <AP_Math/AP_Math.h>
 #include <RC_Channel/RC_Channel.h>
 #include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AP_FlowSensor/AP_FlowSensor.h>     // flow sensor library
 #include <AP_AHRS/AP_AHRS_NavEKF.h>
 
 #define AC_SPRAYER_DEFAULT_PUMP_RATE        10.0f   ///< default quantity of spray per meter travelled
@@ -36,7 +37,7 @@ class AC_Sprayer {
 public:
 
     /// Constructor
-    AC_Sprayer(const AP_InertialNav* inav, const AP_AHRS_NavEKF* ahrs);
+    AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsensor, const AP_AHRS_NavEKF* ahrs);
     
 	// supported sprayer pump types
     enum SprayerPump_Type {
@@ -53,6 +54,9 @@ public:
 
     /// spraying - returns true if spraying is actually happening
     bool spraying() const { return _flags.spraying; }
+	
+	/// enabled - returns true if drain off detected
+    bool get_drain_off() const { return _flags.drain_off; }
 
     /// test_pump - set to true to turn on pump as if travelling at 1m/s as a test
     void test_pump(bool true_false) { _flags.testing = true_false; }
@@ -69,6 +73,7 @@ public:
 
 private:
     const AP_InertialNav* const _inav;      ///< pointers to other objects we depend upon
+    const AP_FlowSensor* const _flowsensor;
     const AP_AHRS_NavEKF* const _ahrs;
 
     // parameters
@@ -77,6 +82,7 @@ private:
     AP_Int8         _pump_min_pct;          ///< minimum pump rate (expressed as a percentage from 0 to 100)
     AP_Int16        _spinner_pwm;           ///< pwm rate of spinner
     AP_Float        _speed_min;             ///< minimum speed in cm/s above which the sprayer will be started
+    AP_Int16        _drain_off_delay;
     AP_Int8         _sprayer_pump_type;     // sprayer pump type -- 1-DAISCH spinning pump 2-Diaphragm pump
 
     /// flag bitmask
@@ -84,11 +90,13 @@ private:
         uint8_t spraying    : 1;            ///< 1 if we are currently spraying
         uint8_t testing     : 1;            ///< 1 if we are testing the sprayer and should output a minimum value
         uint8_t running     : 1;            ///< 1 if we are permitted to run sprayer
+		uint8_t drain_off   : 1;            // true if fluid drain off detected
+        uint8_t drain_off_precheck  : 1;    // true if drain off pre check is ok
     } _flags;
 
     // internal variables
     uint32_t        _speed_over_min_time;   ///< time at which we reached speed minimum
     uint32_t        _speed_under_min_time;  ///< time at which we fell below speed minimum
-
+    uint32_t        _drain_off_pre_time;    // time at which we fell below speed minimum
     void stop_spraying();
 };

@@ -52,17 +52,30 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] = {
     // @Range: 0 2
     // @User: Standard
     AP_GROUPINFO("PUMP_TYPE",   5, AC_Sprayer, _sprayer_pump_type, Pump_Type_Diaphragm),
+	
+	// @Param: DRAIN_DLY
+    // @DisplayName: drain off delay
+    // @Description: pre time for drain off detect
+    // @Units: ms
+    // @Range: 0 5000
+    // @User: Standard
+    AP_GROUPINFO("DRAIN_DLY",   6, AC_Sprayer, _drain_off_delay, 2000),
+
     AP_GROUPEND
 };
 
-AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_AHRS_NavEKF* ahrs) :
+AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsensor, const AP_AHRS_NavEKF* ahrs) :
     _inav(inav),
+    _flowsensor(flowsensor),
     _ahrs(ahrs),
     _speed_over_min_time(0),
-    _speed_under_min_time(0)
+    _speed_under_min_time(0),
+    _drain_off_pre_time(0)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
+    _flags.drain_off = false;
+    _flags.drain_off_precheck = false;
     // check for silly parameter values
     if (_pump_pct_1ms < 0.0f || _pump_pct_1ms > 100.0f) {
         _pump_pct_1ms.set_and_save(AC_SPRAYER_DEFAULT_PUMP_RATE);
@@ -109,6 +122,8 @@ AC_Sprayer::update()
     float vel_fwd_abs;
     // exit immediately if we are disabled or shouldn't be running
     if (!_enabled || !running()) {
+		_drain_off_pre_time = 0;
+        _flags.drain_off_precheck = false;
         run(false);
         return;
     }
@@ -126,7 +141,9 @@ AC_Sprayer::update()
 
     // get the current time
     const uint32_t now = AP_HAL::millis();
-
+    //get spraying flow 
+    const float flow = _flowsensor->get_flow(0);
+	
     bool should_be_spraying = _flags.spraying;
     // check our speed vs the minimum
     if (vel_fwd_abs >= _speed_min) {
@@ -163,6 +180,32 @@ AC_Sprayer::update()
         _speed_over_min_time = 0;
     }
 
+    // detect drain off
+    if (_flags.spraying) {
+        if ( flow == -1 && _flags.drain_off_precheck == true) {
+            _flags.drain_off = true;
+            _flags.drain_off_precheck = false;
+            _drain_off_pre_time = 0;           
+        } else {
+
+            _flags.drain_off = false;
+            if (flow > 0)
+            {
+                if (_drain_off_pre_time == 0)
+                    _drain_off_pre_time = now;
+                else if ((now - _drain_off_pre_time) > (uint32_t)_drain_off_delay) {
+                            _flags.drain_off_precheck = true;
+                        }
+            } else {
+                _drain_off_pre_time = 0;
+            }
+        }
+    }
+    else {
+        _drain_off_pre_time = 0;
+        _flags.drain_off = false;
+        _flags.drain_off_precheck = false;
+    }
     // if testing pump output speed as if travelling at 1m/s
     if (_flags.testing) {
         vel_fwd_abs = 100.0f;
