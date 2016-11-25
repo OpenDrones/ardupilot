@@ -1,6 +1,7 @@
 #include "Copter.h"
 
 #define CONTROL_SWITCH_DEBOUNCE_TIME_MS  200
+#define CONTROL_SWITCH_TIME_THRESHOLD_MS 1000
 
 //Documentation of Aux Switch Flags:
 struct {
@@ -616,6 +617,21 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             }
             break;
 #endif
+
+case AUXSW_SET_MISSION:
+            // short pressed - save wp, long pressed - clear mission and save wp
+            static uint32_t last_call_ms;
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                last_call_ms = millis();
+            } else {
+                uint32_t now = millis();
+                if (now - last_call_ms > CONTROL_SWITCH_TIME_THRESHOLD_MS) {
+                    clear_and_save_waypoint();
+                } else {
+                    save_add_waypoint();
+                }
+            }
+            break;
     }
 }
 
@@ -657,3 +673,61 @@ void Copter::auto_trim()
     }
 }
 
+// save way-point
+void Copter::save_add_waypoint()
+{
+    // do not allow saving new waypoints while we're in auto or wpcruise mode or disarmed
+    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
+        return;
+    }
+
+    // create new mission command
+    AP_Mission::Mission_Command cmd  = {};
+    // set new waypoint to current location
+    cmd.content.location = current_loc;
+    cmd.id = MAV_CMD_NAV_WAYPOINT;
+
+    // add command
+    if (mission.add_cmd(cmd)) {
+        // log event
+        Log_Write_Event(DATA_SAVEWP_ADD_WP);
+        // logging when adding new command
+        if (should_log(MASK_LOG_CMD)) {
+            DataFlash.Log_Write_Mission_Cmd(mission, cmd);
+        }
+    }
+    return;
+}
+
+// save breakpoint in wpcruise flight mode, return true if save waypoint successfully
+void Copter::clear_and_save_waypoint()
+{
+    // do not allow saving new waypoints while we're in auto or wpcruise mode or disarmed
+    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
+        return;
+    }
+
+    // clear mission first
+    if (mission.num_commands() > 0) {
+        if (!mission.clear()) {
+            return;
+        }
+    }
+    // set flag to recalcalate offset direction from RC Roll input in WPCRUISE flight mode
+    flag_recalc_wp_offset_direction = true;
+    // create new mission command
+    AP_Mission::Mission_Command cmd  = {};
+    
+    // set new waypoint to current location
+    cmd.content.location = current_loc;
+    cmd.id = MAV_CMD_NAV_WAYPOINT;
+
+    if (mission.add_cmd(cmd)) {
+        Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);
+        // logging when adding new command
+        if (should_log(MASK_LOG_CMD)) {
+        DataFlash.Log_Write_Mission_Cmd(mission, cmd);
+        }
+    } 
+    return;
+}

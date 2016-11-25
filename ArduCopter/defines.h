@@ -65,11 +65,12 @@ enum aux_sw_func {
     AUXSW_BRAKE =               33, // Brake flight mode
     AUXSW_CRUISE =              34, // Cruise flight mode
     AUXSW_WPCRUISE =            35, // WpCruise flight mode
-	AUXSW_RELAY2 =              36, // Relay2 pin on/off (in Mission planner set CH8_OPT  = 35)
-    AUXSW_RELAY3 =              37, // Relay3 pin on/off (in Mission planner set CH9_OPT  = 36)
-    AUXSW_RELAY4 =              38, // Relay4 pin on/off (in Mission planner set CH10_OPT = 37)
-    AUXSW_THROW =               39,  // change to THROW flight mode
-    AUXSW_AVOID_ADSB =          40,  // enable AP_Avoidance library
+	AUXSW_SET_MISSION =         36, // clear mission, save mission waypoint or set simple grid
+	AUXSW_RELAY2 =              37, // Relay2 pin on/off (in Mission planner set CH8_OPT  = 35)
+    AUXSW_RELAY3 =              38, // Relay3 pin on/off (in Mission planner set CH9_OPT  = 36)
+    AUXSW_RELAY4 =              39, // Relay4 pin on/off (in Mission planner set CH10_OPT = 37)
+    AUXSW_THROW =               40,  // change to THROW flight mode
+    AUXSW_AVOID_ADSB =          41,  // enable AP_Avoidance library
     AUXSW_SWITCH_MAX,
 };
 
@@ -391,6 +392,7 @@ enum DevOptions {
 #define DATA_EKF_YAW_RESET                  62
 #define DATA_AVOIDANCE_ADSB_ENABLE          63
 #define DATA_AVOIDANCE_ADSB_DISABLE         64
+#define DATA_CLEAR_AND_SAVE_WP              65
 
 // Centi-degrees to radians
 #define DEGX100 5729.57795f
