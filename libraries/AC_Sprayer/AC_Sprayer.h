@@ -20,6 +20,7 @@
 #include <AP_Math/AP_Math.h>
 #include <RC_Channel/RC_Channel.h>
 #include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AP_AHRS/AP_AHRS_NavEKF.h>
 
 #define AC_SPRAYER_DEFAULT_PUMP_RATE        10.0f   ///< default quantity of spray per meter travelled
 #define AC_SPRAYER_DEFAULT_PUMP_MIN         0       ///< default minimum pump speed expressed as a percentage from 0 to 100
@@ -35,7 +36,14 @@ class AC_Sprayer {
 public:
 
     /// Constructor
-    AC_Sprayer(const AP_InertialNav* inav);
+    AC_Sprayer(const AP_InertialNav* inav, const AP_AHRS_NavEKF* ahrs);
+    
+	// supported sprayer pump types
+    enum SprayerPump_Type {
+        Pump_Type_None = 0,
+        Pump_Type_Spinner = 1,    // DAISCH Spinning pump control pwm range from 0 to 5000
+        Pump_Type_Diaphragm = 2   // diaphragm pump  control pwm range from 1000 to 2000
+    };
 
     /// run - allow or disallow spraying to occur
     void run(bool true_false);
@@ -61,6 +69,7 @@ public:
 
 private:
     const AP_InertialNav* const _inav;      ///< pointers to other objects we depend upon
+    const AP_AHRS_NavEKF* const _ahrs;
 
     // parameters
     AP_Int8         _enabled;               ///< top level enable/disable control
@@ -68,6 +77,7 @@ private:
     AP_Int8         _pump_min_pct;          ///< minimum pump rate (expressed as a percentage from 0 to 100)
     AP_Int16        _spinner_pwm;           ///< pwm rate of spinner
     AP_Float        _speed_min;             ///< minimum speed in cm/s above which the sprayer will be started
+    AP_Int8         _sprayer_pump_type;     // sprayer pump type -- 1-DAISCH spinning pump 2-Diaphragm pump
 
     /// flag bitmask
     struct sprayer_flags_type {

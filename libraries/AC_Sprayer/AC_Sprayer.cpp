@@ -45,11 +45,19 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("PUMP_MIN",   4, AC_Sprayer, _pump_min_pct, AC_SPRAYER_DEFAULT_PUMP_MIN),
 
+	// @Param: PUMP_TYPE
+    // @DisplayName: sprayer pump type
+    // @Description: sprayer pump type --1-DAISCH spinning pump 0,2-Diaphragm pump
+    // @Units: 
+    // @Range: 0 2
+    // @User: Standard
+    AP_GROUPINFO("PUMP_TYPE",   5, AC_Sprayer, _sprayer_pump_type, Pump_Type_Diaphragm),
     AP_GROUPEND
 };
 
-AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav) :
+AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_AHRS_NavEKF* ahrs) :
     _inav(inav),
+    _ahrs(ahrs),
     _speed_over_min_time(0),
     _speed_under_min_time(0)
 {
@@ -98,6 +106,7 @@ void AC_Sprayer::stop_spraying()
 void
 AC_Sprayer::update()
 {
+    float vel_fwd_abs;
     // exit immediately if we are disabled or shouldn't be running
     if (!_enabled || !running()) {
         run(false);
@@ -111,14 +120,16 @@ AC_Sprayer::update()
 
     // get horizontal velocity
     const Vector3f &velocity = _inav->get_velocity();
-    float ground_speed = norm(velocity.x,velocity.y);
+
+    // convert inertial nav earth-frame velocities_cm/s to body-frame
+    vel_fwd_abs = abs(velocity.x * _ahrs->cos_yaw() + velocity.y * _ahrs->sin_yaw());
 
     // get the current time
     const uint32_t now = AP_HAL::millis();
 
     bool should_be_spraying = _flags.spraying;
     // check our speed vs the minimum
-    if (ground_speed >= _speed_min) {
+    if (vel_fwd_abs >= _speed_min) {
         // if we are not already spraying
         if (!_flags.spraying) {
             // set the timer if this is the first time we've surpassed the min speed
@@ -154,17 +165,26 @@ AC_Sprayer::update()
 
     // if testing pump output speed as if travelling at 1m/s
     if (_flags.testing) {
-        ground_speed = 100.0f;
+        vel_fwd_abs = 100.0f;
         should_be_spraying = true;
     }
 
     // if spraying or testing update the pump servo position
     if (should_be_spraying) {
-        float pos = ground_speed * _pump_pct_1ms;
-        pos = MAX(pos, 100 *_pump_min_pct); // ensure min pump speed
-        pos = MIN(pos,10000); // clamp to range
-        RC_Channel_aux::move_servo(RC_Channel_aux::k_sprayer_pump, pos, 0, 10000);
-        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
+        switch (_sprayer_pump_type) {
+            case Pump_Type_Spinner:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, MIN((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                break;
+
+            case Pump_Type_Diaphragm:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, MIN((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                break;
+
+            default:
+                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, MIN((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                break;
+        }
+		RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
         _flags.spraying = true;
     }else{
         stop_spraying();

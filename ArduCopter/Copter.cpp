@@ -97,7 +97,7 @@ Copter::Copter(void) :
     rally(ahrs),
 #endif
 #if SPRAYER == ENABLED
-    sprayer(&inertial_nav),
+    sprayer(&inertial_nav, &ahrs),
 #endif
 #if PARACHUTE == ENABLED
     parachute(relay),
