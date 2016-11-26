@@ -143,6 +143,43 @@ Vector2f location_diff(const struct Location &loc1, const struct Location &loc2)
 }
 
 /*
+  find two lines intersection
+  */
+bool find_lineintersection(const Vector2f &start1, const Vector2f &end1, const Vector2f &start2, const Vector2f &end2, Vector2f &result)
+{
+    float denom = ((end1.x - start1.x) * (end2.y - start2.y)) - ((end1.y - start1.y) * (end2.x - start2.x));
+    //  AB & CD are parallel         
+    if (denom == 0) {
+      return false;
+    }
+    float numer = ((start1.y - start2.y) * (end2.x - start2.x)) - ((start1.x - start2.x) * (end2.y - start2.y));
+    float r = numer / denom;
+    float numer2 = ((start1.y - start2.y) * (end1.x - start1.x)) - ((start1.x - start2.x) * (end1.y - start1.y));
+    float s = numer2 / denom;
+    if ((r < 0 || r > 1) || (s < 0 || s > 1)) {
+      return false;
+    }
+
+    // Find intersection point
+    result.x = start1.x + (r * (end1.x - start1.x));
+    result.y = start1.y + (r * (end1.y - start1.y));
+    return true;
+}
+
+/*
+  calc offset point
+  */
+Vector2f point_offset(const Vector2f &origin, float heading, int32_t distance)
+{
+  if (heading < 0) {
+    heading += 360;
+  }
+  float x = origin.x + distance * sinf(heading * DEG_TO_RAD);
+  float y = origin.y + distance * cosf(heading * DEG_TO_RAD);
+  return Vector2f(x, y);
+}
+
+/*
   return true if lat and lng match. Ignores altitude and options
  */
 bool locations_are_same(const struct Location &loc1, const struct Location &loc2) {

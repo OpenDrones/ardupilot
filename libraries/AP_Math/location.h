@@ -60,6 +60,16 @@ void        location_offset(struct Location &loc, float ofs_north, float ofs_eas
 Vector2f    location_diff(const struct Location &loc1, const struct Location &loc2);
 
 /*
+  find two lines intersection
+  */
+bool find_lineintersection(const Vector2f &start1, const Vector2f &end1, const Vector2f &start2, const Vector2f &end2, Vector2f &result);
+
+/*
+  offset point
+  */
+Vector2f point_offset(const Vector2f &origin, float heading, int32_t distance);
+
+/*
  * check if lat and lng match. Ignore altitude and options
  */
 bool        locations_are_same(const struct Location &loc1, const struct Location &loc2);

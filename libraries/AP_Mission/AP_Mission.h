@@ -438,6 +438,9 @@ public:
     // return distance_cm of wpcruise
     int16_t get_distance_cm() { return _distance_cm; }
 
+    // calc simple grid according to polygon point
+    bool calc_simple_grid();
+
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
 
@@ -451,6 +454,10 @@ private:
         uint8_t do_cmd_all_done : 1; // true if all "do"/"conditional" commands have been completed (stops unnecessary searching through eeprom for do commands)
     } _flags;
 
+    struct Line {
+        Vector2f p1;
+        Vector2f p2;
+    };
     ///
     /// private methods
     ///

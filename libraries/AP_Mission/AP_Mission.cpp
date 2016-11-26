@@ -1681,3 +1681,155 @@ void AP_Mission::update_wpcruise_target(Location &loc)
         _count.set_and_save(_count + 1);
     }
 }
+
+// calc navigation waypoint according to polygon existed in eeprom
+bool AP_Mission::calc_simple_grid()
+{
+    if (num_commands() < 4 || num_commands() > 15) {
+        return false;
+    }
+
+    // calc reference point based on first waypoint
+    Mission_Command cmd1, cmd2;
+    if (!read_cmd_from_storage(1,cmd1) || !read_cmd_from_storage(2, cmd2)) {
+        return false;
+    }
+    // save first point as the last point
+    if (!add_cmd(cmd1)) {
+        return false;
+    }
+
+    float heading = get_bearing_cd(cmd1.content.location, cmd2.content.location)/100.0;
+    // calc polygon x,y position based on reference point
+    Location reference_location = cmd1.content.location;
+    int8_t polygon_num = num_commands() - 1;
+    float long_scale = longitude_scale(reference_location);
+    Vector2f polygon[polygon_num];
+    for (uint8_t i = 1; i < num_commands(); i++)
+    {
+        Mission_Command cmd_polygon;
+        if (!read_cmd_from_storage(i,cmd_polygon)) {
+            return false;
+        }
+        polygon[i-1].y = (cmd_polygon.content.location.lat - reference_location.lat) * LATLON_TO_CM;
+        polygon[i-1].x = (cmd_polygon.content.location.lng - reference_location.lng) * LATLON_TO_CM * long_scale;
+    }
+
+    // calc rect area, all polygon points inside this rect area
+    float xmin,xmax,ymin,ymax;
+    Vector2f mid_point, rect_center;
+    xmin = polygon[0].x;
+    xmax = polygon[0].x;
+    ymin = polygon[0].y;
+    ymax = polygon[0].y;
+    for (int k = 1; k < polygon_num; ++k)
+    {
+        xmin = MIN(xmin, polygon[k].x);
+        xmax = MAX(xmax, polygon[k].x);
+        ymin = MIN(ymin, polygon[k].y);
+        ymax = MAX(ymax, polygon[k].y);
+    }
+    int32_t diagdist = norm(xmax - xmin, ymax - ymin);
+    mid_point.x = (polygon[0].x + polygon[1].x)/2;
+    mid_point.y = (polygon[0].y + polygon[1].y)/2;
+    rect_center.x = (xmax + xmin)/2;
+    rect_center.y = (ymax + ymin)/2;
+    
+    //judge offset direction according rect center point and polygon 1,2
+    float S = (polygon[0].x - rect_center.x)*(polygon[1].y - rect_center.y) - (polygon[0].y - rect_center.y)*(polygon[1].x - rect_center.x);
+    
+    Vector2f point_temp = mid_point;
+    // calc max parallel lines number
+    uint8_t lines_num = diagdist/_distance_cm + 1;
+    Line Lines[lines_num];
+    Line last_offset_line;
+    int16_t last_line_number = -1;
+    Vector2f waypoint[lines_num*2];
+    
+    // set first and second polygon as waypoint directly
+    waypoint[0] = polygon[0];
+    waypoint[1] = polygon[1];
+    uint16_t wp_count = 2;
+    float heading_offset = 0;
+
+    for (uint8_t j = 1; j < lines_num; j++)
+    {
+        if(S > 0) {
+            heading_offset = heading - 90;
+        } else {
+            heading_offset = heading + 90;
+        }
+        point_temp = point_offset(point_temp, heading_offset, _distance_cm);
+
+        Lines[j-1].p1 = point_offset(point_temp, heading + 180, diagdist);
+        Lines[j-1].p2 = point_offset(point_temp, heading, diagdist);
+
+        // calc intersection point position and point number
+        uint8_t cross = 0;
+        for (uint8_t l = 0; l < polygon_num - 1; l++)
+        {
+            Vector2f intersection;
+            if(find_lineintersection(polygon[l], polygon[l+1], Lines[j-1].p1, Lines[j-1].p2, intersection)) {
+                cross++;
+                waypoint[wp_count] = intersection;
+                wp_count++;
+            }
+        }
+        if (cross == 2) {
+            Vector2f ret, ret1;
+            ret = waypoint[wp_count-2] - waypoint[wp_count-3];
+            ret1 = waypoint[wp_count-1] - waypoint[wp_count-3];
+            if (ret.length() > ret1.length()) {
+                Vector2f temp = waypoint[wp_count-2];
+                waypoint[wp_count-2] = waypoint[wp_count-1];
+                waypoint[wp_count-1] = temp;
+            }
+        } else if (cross == 0){
+                last_line_number = j-1;
+                break;
+        } else if (cross > 2) {
+            return false;
+        }
+    }
+    // calculate last two intersection points
+    point_temp = point_offset(mid_point, heading_offset, (last_line_number + 0.5)*_distance_cm);
+    
+    last_offset_line.p1 = point_offset(point_temp, heading + 180, diagdist);
+    last_offset_line.p2 = point_offset(point_temp, heading, diagdist);
+    // calc intersection point position and point number
+    uint8_t inter_cross = 0;
+    for (uint8_t l = 0; l < polygon_num - 1; l++)
+    {
+        Vector2f intersection_last;
+        if(find_lineintersection(polygon[l], polygon[l+1], last_offset_line.p1, last_offset_line.p2, intersection_last)) {
+            inter_cross++;
+            waypoint[wp_count] = intersection_last;
+            wp_count++;
+        }
+    }
+    // maybe we need change intersections
+    if (inter_cross == 2) {
+        Vector2f ret, ret1;
+        ret = waypoint[wp_count-2] - waypoint[wp_count-3];
+        ret1 = waypoint[wp_count-1] - waypoint[wp_count-3];
+        if (ret.length() > ret1.length()) {
+            Vector2f temp = waypoint[wp_count-2];
+            waypoint[wp_count-2] = waypoint[wp_count-1];
+            waypoint[wp_count-1] = temp;
+        }
+    }
+    
+    // change waypoint vector as location and write into eeprom
+    Mission_Command waypoint_cmd = cmd1;
+    // clear commands
+    _cmd_total = 1;
+    for (uint16_t m = 0; m < wp_count; m++)
+    {
+        waypoint_cmd.content.location.lat = cmd1.content.location.lat + waypoint[m].y/LATLON_TO_CM;
+        waypoint_cmd.content.location.lng = cmd1.content.location.lng + waypoint[m].x/(LATLON_TO_CM * long_scale);
+        if (!add_cmd(waypoint_cmd)) {
+            return false;
+        }
+    }
+    return true;
+}
