@@ -621,6 +621,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 case AUXSW_SET_MISSION:
             // short pressed - save wp, long pressed - clear mission and save wp
             static uint32_t last_call_ms;
+			AP_Notify::flags.succeed_save_wp = 0;
             if (ch_flag == AUX_SWITCH_HIGH) {
                 last_call_ms = millis();
             } else {
@@ -691,6 +692,7 @@ void Copter::save_add_waypoint()
     if (mission.add_cmd(cmd)) {
         // log event
         Log_Write_Event(DATA_SAVEWP_ADD_WP);
+        AP_Notify::flags.succeed_save_wp = 1;
         // logging when adding new command
         if (should_log(MASK_LOG_CMD)) {
             DataFlash.Log_Write_Mission_Cmd(mission, cmd);
@@ -724,6 +726,7 @@ void Copter::clear_and_save_waypoint()
 
     if (mission.add_cmd(cmd)) {
         Log_Write_Event(DATA_CLEAR_AND_SAVE_WP);
+        AP_Notify::flags.succeed_save_wp = 2;
         // logging when adding new command
         if (should_log(MASK_LOG_CMD)) {
         DataFlash.Log_Write_Mission_Cmd(mission, cmd);

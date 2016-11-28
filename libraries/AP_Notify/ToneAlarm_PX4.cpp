@@ -334,6 +334,23 @@ void ToneAlarm_PX4::update()
         play_tone(AP_NOTIFY_PX4_TONE_TUNING_ERROR);
         AP_Notify::events.tune_error = 0;
     }
+    // save waypoint successfully
+    if (flags.succeed_save_wp != AP_Notify::flags.succeed_save_wp) {
+        flags.succeed_save_wp = AP_Notify::flags.succeed_save_wp;
+        switch (flags.succeed_save_wp) {
+            case 1:  
+                play_tone(AP_NOTIFY_PX4_TONE_LOUD_ATTENTION_NEEDED);
+                break;
+            case 2:
+                // arming tune
+                play_tone(AP_NOTIFY_PX4_TONE_QUIET_ARMING_WARNING);
+                break;
+            case 3:
+                // alert creat grid failed
+                play_tone(AP_NOTIFY_PX4_TONE_LOUD_VEHICLE_LOST_CTS);
+                break;
+        }
+    }
 }
 
 
