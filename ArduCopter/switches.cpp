@@ -2,6 +2,7 @@
 
 #define CONTROL_SWITCH_DEBOUNCE_TIME_MS  200
 #define CONTROL_SWITCH_TIME_THRESHOLD_MS 1000
+#define CONTROL_SWITCH_GRID_TIME_THRESHOLD_MS 5000
 
 //Documentation of Aux Switch Flags:
 struct {
@@ -626,7 +627,14 @@ case AUXSW_SET_MISSION:
                 last_call_ms = millis();
             } else {
                 uint32_t now = millis();
-                if (now - last_call_ms > CONTROL_SWITCH_TIME_THRESHOLD_MS) {
+                if (now - last_call_ms > CONTROL_SWITCH_GRID_TIME_THRESHOLD_MS) {
+                    if(mission.calc_simple_grid()) {
+                        AP_Notify::flags.succeed_save_wp = 2;
+                    } else {
+                        // alert creat grid failed by LED
+                        AP_Notify::flags.succeed_save_wp = 3;
+                    }
+                } else if (now - last_call_ms > CONTROL_SWITCH_TIME_THRESHOLD_MS) {
                     clear_and_save_waypoint();
                 } else {
                     save_add_waypoint();
