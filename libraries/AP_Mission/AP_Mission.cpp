@@ -1711,8 +1711,8 @@ bool AP_Mission::calc_simple_grid()
         if (!read_cmd_from_storage(i,cmd_polygon)) {
             return false;
         }
-        polygon[i-1].y = (cmd_polygon.content.location.lat - reference_location.lat) * LATLON_TO_CM;
-        polygon[i-1].x = (cmd_polygon.content.location.lng - reference_location.lng) * LATLON_TO_CM * long_scale;
+        polygon[i-1].y = (cmd_polygon.content.location.lat - reference_location.lat) * LOCATION_SCALING_FACTOR * 100.0f;
+        polygon[i-1].x = (cmd_polygon.content.location.lng - reference_location.lng) * LOCATION_SCALING_FACTOR * 100.0f * long_scale;
     }
 
     // calc rect area, all polygon points inside this rect area
@@ -1825,8 +1825,8 @@ bool AP_Mission::calc_simple_grid()
     _cmd_total = 1;
     for (uint16_t m = 0; m < wp_count; m++)
     {
-        waypoint_cmd.content.location.lat = cmd1.content.location.lat + waypoint[m].y/LATLON_TO_CM;
-        waypoint_cmd.content.location.lng = cmd1.content.location.lng + waypoint[m].x/(LATLON_TO_CM * long_scale);
+        waypoint_cmd.content.location.lat = reference_location.lat + int (waypoint[m].y * LOCATION_SCALING_FACTOR_INV * 0.01f);
+        waypoint_cmd.content.location.lng = reference_location.lng + int (waypoint[m].x * LOCATION_SCALING_FACTOR_INV * 0.01f / long_scale);
         if (!add_cmd(waypoint_cmd)) {
             return false;
         }
