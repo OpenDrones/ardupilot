@@ -168,8 +168,12 @@ void Copter::wpcruise_run()
                 }
                 wpcruise.flag_init_destination = false;
             }
-            // loiter when low battery
-            if (WpCruise_state != Wpcruise_loiter && failsafe.battery) {
+            // loiter and add way-point when flow break or low battery
+            if (WpCruise_state != Wpcruise_loiter && (sprayer.get_drain_off() || failsafe.battery)) {
+                if (WpCruise_state == Waypoint_Nav) {
+                    // save current waypoint position
+                    save_add_waypoint();
+                }
                 // set wpcruise state
                 WpCruise_state = Wpcruise_loiter;
                 // calc stopping point as destination
