@@ -191,6 +191,9 @@ bool AP_Mission::clear()
     // remove all commands
     _cmd_total.set_and_save(0);
 
+    // init count
+    _count.set_and_save(1);
+
     // clear index to commands
     _nav_cmd.index = AP_MISSION_CMD_INDEX_NONE;
     _do_cmd.index = AP_MISSION_CMD_INDEX_NONE;
