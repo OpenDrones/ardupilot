@@ -307,7 +307,16 @@ void ToneAlarm_PX4::update()
         }
     }
 
-    // waiting to be thrown vehicle tone
+    // check if ekf status has changed
+    if (flags.failsafe_ekf != AP_Notify::flags.ekf_bad) {
+        flags.failsafe_ekf = AP_Notify::flags.ekf_bad;
+        if (flags.failsafe_ekf) {
+            // ekf warning tune
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_VEHICLE_LOST_CTS);
+        }
+    }
+	
+	// waiting to be thrown vehicle tone
     if (flags.waiting_for_throw != AP_Notify::flags.waiting_for_throw) {
         flags.waiting_for_throw = AP_Notify::flags.waiting_for_throw;
         if (flags.waiting_for_throw) {
