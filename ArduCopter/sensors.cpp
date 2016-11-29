@@ -98,7 +98,12 @@ void Copter::rpm_update(void)
 void Copter::flow_sensor_update(void)
 {
     flow_sensor.update();
-	// log flow rate if there's flow sensor. TBD
+	// log flow rate if there's flow sensor
+    if (flow_sensor.num_sensors() != 0) {
+        if (should_log(MASK_LOG_RCIN)) {
+            DataFlash.Log_Write_FlowS(flow_sensor);
+        }
+    }
 }
 
 // initialise compass
