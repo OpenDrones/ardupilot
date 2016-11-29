@@ -1857,6 +1857,17 @@ void DataFlash_Class::Log_Write_RPM(const AP_RPM &rpm_sensor)
     WriteBlock(&pkt, sizeof(pkt));
 }
 
+void DataFlash_Class::Log_Write_FlowS(const AP_FlowSensor &flow_sensor)
+{
+    struct log_FLOWS pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_FLOWS_MSG),
+        time_us     : AP_HAL::micros64(),
+        flow1       : MIN(20, flow_sensor.get_flow(0)),
+        health1     : flow_sensor.healthy(0)
+    };
+    WriteBlock(&pkt, sizeof(pkt));
+}
+
 // Write an rate packet
 void DataFlash_Class::Log_Write_Rate(const AP_AHRS &ahrs,
                                      const AP_Motors &motors,

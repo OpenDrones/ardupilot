@@ -649,6 +649,13 @@ struct PACKED log_RPM {
     float rpm2;
 };
 
+struct PACKED log_FLOWS {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float flow1;
+    uint8_t health1;
+};
+
 struct PACKED log_Rate {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -907,6 +914,8 @@ Format characters in the format string for binary log messages
       "ORGN","QBLLe","TimeUS,Type,Lat,Lng,Alt" }, \
     { LOG_RPM_MSG, sizeof(log_RPM), \
       "RPM",  "Qff", "TimeUS,rpm1,rpm2" }, \
+    { LOG_FLOWS_MSG, sizeof(log_FLOWS), \
+      "FLOW",  "QfB", "TimeUS,flow1,Health" }, \
     { LOG_GIMBAL1_MSG, sizeof(log_Gimbal1), \
       "GMB1", "Iffffffffff", "TimeMS,dt,dax,day,daz,dvx,dvy,dvz,jx,jy,jz" }, \
     { LOG_GIMBAL2_MSG, sizeof(log_Gimbal2), \
@@ -1002,6 +1011,7 @@ enum LogMessages {
     LOG_IMUDT3_MSG,
     LOG_ORGN_MSG,
     LOG_RPM_MSG,
+    LOG_FLOWS_MSG,
     LOG_GPA_MSG,
     LOG_GPA2_MSG,
     LOG_RFND_MSG,
