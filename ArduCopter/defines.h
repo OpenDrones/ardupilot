@@ -342,6 +342,13 @@ enum DevOptions {
 #define MASK_LOG_IMU_RAW                (1UL<<19)
 #define MASK_LOG_ANY                    0xFFFF
 
+// BITMASK - notify (to be added)
+#define MASK_NOTIFY_ALWAYS              (1<<0)
+#define MASK_NOTIFY_BATT                (1<<1)
+#define MASK_NOTIFY_EKF                 (1<<2)
+#define MASK_NOTIFY_DRAINOFF            (1<<3)
+#define MASK_NOTIFY_CRUISE_LOIT         (1<<4)
+
 // DATA - event logging
 #define DATA_AP_STATE                       7
 #define DATA_SYSTEM_TIME_SET                8

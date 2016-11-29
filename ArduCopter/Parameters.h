@@ -187,7 +187,8 @@ public:
         // 97: RSSI
         k_param_rssi = 97,
                 
-        //
+        k_param_notify_bitmask,   // 98
+		//
         // 100: Inertial Nav
         //
         k_param_inertial_nav = 100, // deprecated
@@ -437,6 +438,7 @@ public:
     // Misc
     //
     AP_Int32        log_bitmask;
+    AP_Int16        notify_bitmask;
     AP_Int8         esc_calibrate;
     AP_Int8         radio_tuning;
     AP_Int16        radio_tuning_high;

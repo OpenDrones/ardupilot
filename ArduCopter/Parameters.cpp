@@ -357,6 +357,13 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Standard
     GSCALAR(log_bitmask,    "LOG_BITMASK",          DEFAULT_LOG_BITMASK),
 
+    // @Param: DEFAULT_NOTIFY_BITMASK
+    // @DisplayName: Notify bitmask
+    // @Description: 2 byte bitmap of notify types to enable
+    // @Values: 
+    // @Bitmask: 0:always flash to indicate position of vehicle,1:BATT,2:EKF,3:DRAINOFF
+    // @User: Standard
+    GSCALAR(notify_bitmask,    "NOTIFY_BITMASK",         DEFAULT_NOTIFY_BITMASK),
     // @Param: ESC_CALIBRATION
     // @DisplayName: ESC Calibration
     // @Description: Controls whether ArduCopter will enter ESC calibration on the next restart.  Do not adjust this parameter manually.

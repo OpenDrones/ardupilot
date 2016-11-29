@@ -81,7 +81,9 @@ void Copter::ekf_check()
     }
 
     // set AP_Notify flags
-    AP_Notify::flags.ekf_bad = ekf_check_state.bad_variance;
+    if (g.notify_bitmask & MASK_NOTIFY_EKF) {
+        AP_Notify::flags.ekf_bad = ekf_check_state.bad_variance;
+    }
 
     // To-Do: add ekf variances to extended status
 }
