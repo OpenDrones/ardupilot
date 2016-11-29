@@ -350,7 +350,7 @@ public:
         k_param_pid_optflow_roll,       // remove
         k_param_pid_optflow_pitch,      // remove
         k_param_acro_balance_roll_old,  // remove
-        k_param_acro_balance_pitch_old, // remove
+		k_param_pid_rate_z,
         k_param_pid_accel_z,
         k_param_acro_balance_roll,
         k_param_acro_balance_pitch,
@@ -493,6 +493,7 @@ public:
 
     AC_P                    p_vel_z;
     AC_PID                  pid_accel_z;
+    AC_PID                  pid_rate_z;
 
     AC_P                    p_pos_xy;
     AC_P                    p_alt_hold;
@@ -527,7 +528,7 @@ public:
 
         p_vel_z                 (VEL_Z_P),
         pid_accel_z             (ACCEL_Z_P,       ACCEL_Z_I,        ACCEL_Z_D,      ACCEL_Z_IMAX,       ACCEL_Z_FILT_HZ,    MAIN_LOOP_SECONDS),
-
+        pid_rate_z              (RATE_Z_P,        RATE_Z_I,         RATE_Z_D,       RATE_Z_IMAX,        RATE_Z_FILT_HZ,     MAIN_LOOP_SECONDS),
         // P controller	        initial P
         //----------------------------------------------------------------------
         p_pos_xy                (POS_XY_P),
