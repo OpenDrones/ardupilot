@@ -469,6 +469,7 @@ void Copter::three_hz_loop()
         Log_Write_Event(DATA_SPRAY_DRAIN_OFF);
     }
     ap.drain_off = sprayer.get_drain_off();
+	AP_Notify::flags.drain_off = ap.drain_off;
 #endif
 
     update_events();
