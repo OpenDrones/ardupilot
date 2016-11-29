@@ -193,7 +193,11 @@ void Copter::cruise_run()
             // reset cruise_state as loiter
             cruise.state = CRUISE_LOITER;
         }
-         
+        // update notify flags
+        if (g.notify_bitmask & MASK_NOTIFY_CRUISE_LOIT) {
+            AP_Notify::flags.cruise_loiter = (cruise.state == CRUISE_LOITER);
+        }
+        
         // run waypoint controller
         wp_nav.update_wpnav_xy();
         // call attitude controller
