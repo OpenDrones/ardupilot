@@ -100,6 +100,8 @@ public:
         k_param_pilot_velocity_z_max,
         k_param_circle_rate,                // deprecated - remove
         k_param_rangefinder_gain,
+        // Use rangefinder or not in auto flight mode
+        k_param_rangefinder_use_wp,
         k_param_ch8_option,
         k_param_arming_check,
         k_param_sprayer,
@@ -107,7 +109,7 @@ public:
         k_param_gps_hdop_good,
         k_param_battery,
         k_param_fs_batt_mah,
-        k_param_angle_rate_max,         // remove
+        
         k_param_rssi_range,             // unused, replaced by rssi_ library parameters
         k_param_rc_feel_rp,
         k_param_NavEKF,                 // Extended Kalman Filter Inertial Navigation Group
@@ -392,6 +394,7 @@ public:
     AP_Int16        rtl_speed_cms;
     AP_Float        rtl_cone_slope;
     AP_Float        rangefinder_gain;
+    AP_Int8         rangefinder_use_wp;
 
     AP_Int8         failsafe_battery_enabled;   // battery failsafe enabled
     AP_Float        fs_batt_voltage;            // battery voltage below which failsafe will be triggered

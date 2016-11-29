@@ -155,6 +155,14 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Standard
     GSCALAR(rangefinder_gain, "RNGFND_GAIN", RANGEFINDER_GAIN_DEFAULT),
 
+	// @Param: RNGFND_USE_WP
+    // @DisplayName: Rangefinder USE in AUTO Way point
+    // @Description: Used to judge whether to use rangefinder in waypoint navigation
+    // @Range: 0  1
+    // @Increment: 1
+    // @User: Standard
+    GSCALAR(rangefinder_use_wp,     "RNGFND_USE_WP",           1),
+
     // @Param: FS_BATT_ENABLE
     // @DisplayName: Battery Failsafe Enable
     // @Description: Controls whether failsafe will be invoked when battery voltage or current runs low
