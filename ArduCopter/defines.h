@@ -393,6 +393,7 @@ enum DevOptions {
 #define DATA_AVOIDANCE_ADSB_ENABLE          63
 #define DATA_AVOIDANCE_ADSB_DISABLE         64
 #define DATA_CLEAR_AND_SAVE_WP              65
+#define DATA_SPRAY_DRAIN_OFF                66  // drain off during spraying
 
 // Centi-degrees to radians
 #define DEGX100 5729.57795f

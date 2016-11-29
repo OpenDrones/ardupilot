@@ -269,7 +269,8 @@ private:
             uint8_t land_repo_active        : 1; // 22      // true if the pilot is overriding the landing position
             uint8_t motor_interlock_switch  : 1; // 23      // true if pilot is requesting motor interlock enable
             uint8_t in_arming_delay         : 1; // 24      // true while we are armed but waiting to spin motors
-        };
+        	uint8_t drain_off               : 1; // 25      // flag of drain off
+		};
         uint32_t value;
     } ap;
 
