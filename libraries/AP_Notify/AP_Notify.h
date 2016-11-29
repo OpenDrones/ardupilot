@@ -60,6 +60,7 @@ public:
         uint32_t ekf_bad            : 1;    // 1 if ekf is reporting problems
         uint32_t autopilot_mode     : 1;    // 1 if vehicle is in an autopilot flight mode (only used by OreoLEDs)
         uint32_t succeed_save_wp    : 2;    // 0 if save wp failed, 1 if save wp successfully, 2 if clear and save wp successfully, 3 if creat grid successfully
+        uint32_t drain_off          : 1;    // 1 if drain off
 		uint32_t firmware_update    : 1;    // 1 just before vehicle firmware is updated
         uint32_t compass_cal_running: 1;    // 1 if a compass calibration is running
 

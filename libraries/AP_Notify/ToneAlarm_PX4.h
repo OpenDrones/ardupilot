@@ -59,7 +59,8 @@ private:
         uint8_t vehicle_lost          : 1;    // 1 if lost copter tone requested
         uint8_t failsafe_ekf          : 1;    // 1 if ekf bad
 		uint8_t succeed_save_wp       : 2;    // 0 if save wp failed, 1 if save wp successfully, 2 if clear and save wp successfully, 3 if creat grid successfully
-        uint8_t compass_cal_running   : 1;    // 1 if compass calibration is running
+        uint8_t drain_off             : 1;    // 1 if drain off
+		uint8_t compass_cal_running   : 1;    // 1 if compass calibration is running
         uint8_t waiting_for_throw     : 1;    // 1 if waiting for copter throw launch
     } flags;
 

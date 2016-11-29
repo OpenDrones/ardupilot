@@ -316,6 +316,15 @@ void ToneAlarm_PX4::update()
         }
     }
 	
+	// check if drain off
+    if (flags.drain_off != AP_Notify::flags.drain_off) {
+        flags.drain_off = AP_Notify::flags.drain_off;
+        if (flags.drain_off) {
+            // drain off warning tune
+            play_tone(AP_NOTIFY_PX4_TONE_LOUD_ATTENTION_NEEDED);
+        }
+	}
+	
 	// waiting to be thrown vehicle tone
     if (flags.waiting_for_throw != AP_Notify::flags.waiting_for_throw) {
         flags.waiting_for_throw = AP_Notify::flags.waiting_for_throw;
