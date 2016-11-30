@@ -323,6 +323,9 @@ public:
     /// reset - reset mission to the first command
     void reset();
 
+	// return restart or resume flag
+    bool is_restart() { return _restart; }
+
     // set AB WpCruise offset direction from pilot roll input
     void set_wp_direction(int8_t roll_direction) { _offset_direction.set_and_save(roll_direction); }
     
