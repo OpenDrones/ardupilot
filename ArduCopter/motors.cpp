@@ -248,7 +248,9 @@ void Copter::init_disarm_motors()
     motors.armed(false);
 
     // reset the mission
-    mission.reset();
+    if (mission.is_restart()) {
+        mission.reset();
+    }
 
     // suspend logging
     if (!DataFlash.log_while_disarmed()) {
