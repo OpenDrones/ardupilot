@@ -249,7 +249,8 @@ bool Copter::ins_checks(bool display_failure)
                      * in the EKF. Allow for larger accel discrepancy
                      * for IMU3 as it may be running at a different temperature
                      */
-                    threshold *= 2;
+                    // threshold *= 2;
+					break;  // cancel 3rd imu inconsistency check
                 }
 
                 // EKF is less sensitive to Z-axis error
@@ -275,6 +276,9 @@ bool Copter::ins_checks(bool display_failure)
         // check all gyros are consistent
         if (ins.get_gyro_count() > 1) {
             for(uint8_t i=0; i<ins.get_gyro_count(); i++) {
+				if (i >= 2) {
+					break; // don't check 3rd imu
+				}
                 // get rotation rate difference between gyro #i and primary gyro
                 Vector3f vec_diff = ins.get_gyro(i) - ins.get_gyro();
                 if (vec_diff.length() > PREARM_MAX_GYRO_VECTOR_DIFF) {
