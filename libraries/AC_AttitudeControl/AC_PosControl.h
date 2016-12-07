@@ -46,7 +46,7 @@
 #define POSCONTROL_OVERSPEED_GAIN_Z             2.0f    // gain controlling rate at which z-axis speed is brought back within SPEED_UP and SPEED_DOWN range
 #define POSCONTROL_IMU_ERROR_TIMEOUT_MS         2000
 #define POSCONTROL_ACCEL_Z_MAX_CM               350.0f
-#define POSCONTROL_RATIO_THRESHOLD              0.1f
+#define POSCONTROL_RATIO_THRESHOLD              0.1
 
 class AC_PosControl
 {
@@ -299,6 +299,8 @@ private:
             uint16_t freeze_ff_xy       : 1;    // 1 use to freeze feed forward during step updates
             uint16_t freeze_ff_z        : 1;    // 1 used to freeze velocity to accel feed forward for one iteration
             uint16_t use_desvel_ff_z    : 1;    // 1 to use z-axis desired velocity as feed forward into velocity step
+            uint16_t limit_throut_ratio : 1;    // limit throttle out when imu ratio resulting into rising
+            uint16_t limit_throut_acc   : 1;    // limit throttle out when acc data bad resulting into rising
     } _flags;
 
     // limit flags structure

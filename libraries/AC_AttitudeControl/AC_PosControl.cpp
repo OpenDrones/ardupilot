@@ -83,6 +83,8 @@ AC_PosControl::AC_PosControl(const AP_AHRS& ahrs, const AP_InertialNav& inav, co
     _flags.freeze_ff_xy = true;
     _flags.freeze_ff_z = true;
     _flags.use_desvel_ff_z = true;
+    _flags.limit_throut_ratio = false;
+    _flags.limit_throut_acc = false;
     _limit.pos_up = true;
     _limit.pos_down = true;
     _limit.vel_up = true;
@@ -452,6 +454,14 @@ void AC_PosControl::rate_to_accel_z()
     
     // get imu ratio
     _ekf.getIMU1Weighting(ratio);
+
+    // limit throttle out when imu bad
+    if (ratio <= 0.1 || ratio >= 0.9) {
+        _flags.limit_throut_ratio = true;
+    } else {
+        _flags.limit_throut_ratio = false;
+    }
+
     if (ratio >= POSCONTROL_RATIO_THRESHOLD && ratio <= (1 - POSCONTROL_RATIO_THRESHOLD)) {
         _last_imu_ok_time_ms = hal.scheduler->millis();
     } else if (hal.scheduler->millis() - _last_imu_ok_time_ms > POSCONTROL_IMU_ERROR_TIMEOUT_MS) {
@@ -488,7 +498,7 @@ void AC_PosControl::rate_to_throttle(float vel_error_z)
     // get d term
     d = _pid_rate_z.get_d();
 
-    float thr_out = p+i+d+_throttle_hover;
+    float thr_out = constrain_float(p+i+d+_throttle_hover, 0, _throttle_hover * 1.3);
 
     // send throttle to attitude controller with angle boost
     _attitude_control.set_throttle_out(thr_out, true, POSCONTROL_THROTTLE_CUTOFF_FREQ);
@@ -505,8 +515,16 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
     if (_accel_z_max_meas <= 300 || _accel_z_max_meas >= 600) {
         _accel_z_max_meas = POSCONTROL_ACCEL_Z_MAX_CM;
     }
+    
     // Calculate Earth Frame Z acceleration
     z_accel_meas = -(_ahrs.get_accel_ef_blended().z + GRAVITY_MSS) * 100.0f;
+    // judge accel_z reasonability, if no, limit throttle out
+    if (z_accel_meas > GRAVITY_MSS) {
+        _flags.limit_throut_acc = true;
+    } else {
+        _flags.limit_throut_acc =false;
+    }
+    // limit accel_z
     z_accel_meas = constrain_float(z_accel_meas, -_accel_z_max_meas, _accel_z_max_meas);
 
     // reset target altitude if this controller has just been engaged
@@ -540,6 +558,9 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
     d = _pid_accel_z.get_d();
 
     float thr_out = p+i+d+_throttle_hover;
+    if (_flags.limit_throut_ratio || _flags.limit_throut_acc) {
+        thr_out = constrain_float(thr_out, 0, _throttle_hover);
+    }
 
     // send throttle to attitude controller with angle boost
     _attitude_control.set_throttle_out(thr_out, true, POSCONTROL_THROTTLE_CUTOFF_FREQ);
