@@ -489,9 +489,6 @@ private:
 
     // last time that mission changed
     uint32_t _last_change_time_ms;
-
-    // flag to recalc waypoint direction
-    uint8_t _flag_recalc_offset_deirection;
 };
 
 #endif
