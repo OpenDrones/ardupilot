@@ -515,15 +515,14 @@ void AC_PosControl::accel_to_throttle(float accel_target_z)
     if (_accel_z_max_meas <= 300 || _accel_z_max_meas >= 600) {
         _accel_z_max_meas = POSCONTROL_ACCEL_Z_MAX_CM;
     }
-    
-    // Calculate Earth Frame Z acceleration
-    z_accel_meas = -(_ahrs.get_accel_ef_blended().z + GRAVITY_MSS) * 100.0f;
     // judge accel_z reasonability, if no, limit throttle out
-    if (z_accel_meas > GRAVITY_MSS) {
+    if (_ahrs.get_accel_ef_blended().z > 0) {
         _flags.limit_throut_acc = true;
     } else {
         _flags.limit_throut_acc =false;
     }
+    // Calculate Earth Frame Z acceleration
+    z_accel_meas = -(_ahrs.get_accel_ef_blended().z + GRAVITY_MSS) * 100.0f;
     // limit accel_z
     z_accel_meas = constrain_float(z_accel_meas, -_accel_z_max_meas, _accel_z_max_meas);
 
