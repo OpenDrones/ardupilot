@@ -46,7 +46,7 @@ AP_Frsky_Telem::AP_Frsky_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, AC_Spraye
     _sats_data_ready(false),
     _gps_sats(0),
     _gps_hdop(0),
-    _home_distance_cm(0),
+    _home_distance_dm(0),
     _gps_data_ready(false),
     _pos_gps_ok(false),
     _course_in_degrees(0),
@@ -511,7 +511,7 @@ void AP_Frsky_Telem::calc_target_sonar_alt(int16_t target_sonar_alt)
 // calc_home_distance: calc distance from current pos to home pos
 void AP_Frsky_Telem::calc_home_distance(int32_t home_distance)
 {
-    _home_distance_cm = home_distance;
+    _home_distance_dm = home_distance/10;
 }
 
 // set unarmed reason
@@ -709,7 +709,7 @@ send home distance
 */
 void AP_Frsky_Telem::send_home_distance(void)
 {
-    frsky_send_data(FRSKY_ID_ACCEL_X, _home_distance_cm);
+    frsky_send_data(FRSKY_ID_ACCEL_X, _home_distance_dm);
 }
 
 /*

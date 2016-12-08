@@ -205,7 +205,7 @@ private:
     uint16_t _baro_alt_cm;
 
     uint16_t _target_sonar_alt_cm;
-    uint16_t _home_distance_cm;
+    uint16_t _home_distance_dm;
 
     bool _mode_data_ready;
     uint8_t _mode; 
