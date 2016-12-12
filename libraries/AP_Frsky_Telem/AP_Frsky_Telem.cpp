@@ -535,7 +535,8 @@ float  AP_Frsky_Telem::frsky_format_gps(float dec)
 void AP_Frsky_Telem::calc_gps_position()
 {
     _course_in_degrees = (_ahrs.yaw_sensor / 100) % 360;
-    _mission_point_num = _mission.num_commands();
+    _mission_point_num = min(31, _mission.num_commands());
+    _mission_point_num = _mission_point_num * 1000 + _course_in_degrees;
 
     const AP_GPS &gps = _ahrs.get_gps();
     float lat;
