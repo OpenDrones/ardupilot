@@ -239,22 +239,6 @@ void Copter::exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
         if (mission.state() == AP_Mission::MISSION_RUNNING) {
             mission.stop();
 
-            // save current position and replace last waypoint and return here when resuming mission
-            if (!mission.is_restart())
-            {
-                AP_Mission::Mission_Command cmd = {};
-                cmd.id = MAV_CMD_NAV_WAYPOINT;
-                cmd.content.location = current_loc;
-                
-                // if altitude control with sonar in auto mode, recalculate target altitude
-                if (g.sonar_alt_wp != 0 && sonar_enabled) {
-                    cmd.content.location.alt = target_sonar_alt;
-                }
-                cmd.p1 = 0;
-                mission.replace_cmd(mission.get_prev_nav_cmd_index(),cmd);
-                mission.set_current_cmd(mission.get_prev_nav_cmd_index());
-            }
-        }
 #if MOUNT == ENABLED
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED
