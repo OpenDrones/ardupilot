@@ -338,11 +338,6 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 
                 // set new waypoint to current location
                 cmd.content.location = current_loc;
-				
-				// if using range finder in auto mode, recalculate target altitude
-                if (g.sonar_alt_wp != 0 && sonar_enabled) {
-                    cmd.content.location.alt = target_sonar_alt;
-                }
 
                 // if throttle is above zero, create waypoint command
                 if(channel_throttle->control_in > 0) {

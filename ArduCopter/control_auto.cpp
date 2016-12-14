@@ -160,13 +160,12 @@ void Copter::auto_wp_start(const Vector3f& destination)
 
     // initialise wpnav
     // don't use range finder in auto flight mode
-	if (g.sonar_alt_wp == 0 || (!sonar_enabled)) {
+	if (g.sonar_alt_wp == 0) {
         wp_nav.set_wp_destination(destination);
     }
 	// use range finder in auto flight mode
     else {
         wp_nav.set_wp_xy_origin_and_destination(destination);
-        target_sonar_alt = destination.z;
     }
     
     // initialise yaw
@@ -201,6 +200,9 @@ void Copter::auto_wp_run()
     // process pilot's yaw input
     float target_yaw_rate = 0;
     if (!failsafe.radio) {
+        // get pilot desired climb rate
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
         if (!is_zero(target_yaw_rate)) {
@@ -210,16 +212,12 @@ void Copter::auto_wp_run()
 
     // run waypoint controller
     // don't use range finder in auto flight mode
-    if (g.sonar_alt_wp == 0 || (!sonar_enabled)) {
+    if (g.sonar_alt_wp == 0) {
         wp_nav.update_wpnav();
     } 
 	// use range finder in auto flight mode
 	else {
         wp_nav.update_wpnav_xy();
-
-        // calculate current target sonar altitude according to current xy position
-        // target_sonar_alt = wp_nav.calc_curr_target_z();
-
         // altitude controller according to range finder
         if (sonar_enabled) {
             // if sonar is ok, use surface tracking
