@@ -735,10 +735,10 @@ void Copter::auto_trim()
     }
 }
 
-// save breakpoint in wpcruise flight mode
+// save way-point
 void Copter::save_add_waypoint()
 {
-    // do not allow saving new waypoints while we're in auto or disarmed
+    // do not allow saving new waypoints while we're in auto or wpcruise mode or disarmed
     if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
         return;
     }
@@ -753,35 +753,23 @@ void Copter::save_add_waypoint()
     cmd.content.location = current_loc;
     cmd.id = MAV_CMD_NAV_WAYPOINT;
 
-        // add or replace command
-        if(mission.num_commands() == 4) {
-            if(mission.replace_cmd(3,cmd)) {
-                // log event
-                Log_Write_Event(DATA_SAVEWP_ADD_WP);
-                AP_Notify::flags.succeed_save_wp = 1;
-                // logging when adding new command
-                if (should_log(MASK_LOG_CMD)) {
-                    DataFlash.Log_Write_Mission_Cmd(mission, cmd);
-                }
-            }
-        } else {
-            if (mission.add_cmd(cmd)) {
-                // log event
-                Log_Write_Event(DATA_SAVEWP_ADD_WP);
-                AP_Notify::flags.succeed_save_wp = 1;
-                // logging when adding new command
-                if (should_log(MASK_LOG_CMD)) {
-                DataFlash.Log_Write_Mission_Cmd(mission, cmd);
-                }
-            }
+    // add command
+    if (mission.add_cmd(cmd)) {
+        // log event
+        Log_Write_Event(DATA_SAVEWP_ADD_WP);
+        AP_Notify::flags.succeed_save_wp = 1;
+        // logging when adding new command
+        if (should_log(MASK_LOG_CMD)) {
+            DataFlash.Log_Write_Mission_Cmd(mission, cmd);
         }
+    }
     return;
 }
 
 // save breakpoint in wpcruise flight mode, return true if save waypoint successfully
 void Copter::clear_and_save_waypoint()
 {
-    // do not allow saving new waypoints while we're in auto or disarmed
+    // do not allow saving new waypoints while we're in auto or wpcruise mode or disarmed
     if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
         return;
     }
