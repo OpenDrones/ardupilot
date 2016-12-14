@@ -61,7 +61,7 @@ public:
         k_elevator              = 19,            ///< elevator
         k_elevator_with_input   = 20,            ///< elevator, with rc input
         k_rudder                = 21,            ///< secondary rudder channel
-        k_sprayer_pump          = 22,            ///< crop sprayer pump channel
+        k_sprayer_pump_fore     = 22,            ///< crop sprayer fore pump channel
         k_sprayer_spinner       = 23,            ///< crop sprayer spinner channel
         k_flaperon1             = 24,            ///< flaperon, left wing
         k_flaperon2             = 25,            ///< flaperon, right wing
@@ -70,6 +70,7 @@ public:
         k_epm                   = 28,            ///< epm gripper
         k_landing_gear_control  = 29,            ///< landing gear controller
         k_engine_run_enable     = 30,            ///< engine kill switch, used for gas airplanes and helicopters
+        k_sprayer_pump_back     = 31,            ///< crop sprayer back pump channel
         k_nr_aux_servo_functions         ///< This must be the last enum value (only add new values _before_ this one)
     } Aux_servo_function_t;
 

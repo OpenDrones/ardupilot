@@ -151,8 +151,8 @@ AC_Sprayer::enable(bool true_false)
     if (!_enabled) {
         // send output to pump channel
         // To-Do: change 0 below to radio_min of pump servo
-        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump);
-
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_fore);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_back);
         // send output to spinner channel
         // To-Do: change 0 below to radio_min of spinner servo
         RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_spinner);
@@ -166,7 +166,7 @@ void
 AC_Sprayer::update()
 {
     uint32_t now;
-    float vel_fwd_abs;
+    float vel_fwd, vel_fwd_abs;
     
     if ( (_motors->armed() != _armed) && (_motors->armed() == false) ) {
         _area.set_and_save(_current_total_area);  
@@ -178,14 +178,16 @@ AC_Sprayer::update()
         _drain_off_pre_time = 0;
         _flags.drain_off_precheck = false;
         // ensure sprayer and spinner are off
-        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_fore);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_back);
         RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_spinner);
         return;
     }
 
 
     // exit immediately if the pump function has not been set-up for any servo
-    if (!RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump)) {
+    if (!RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump_fore)
+	&& !RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump_back)) {
         return;
     }
 
@@ -193,7 +195,8 @@ AC_Sprayer::update()
     const Vector3f &velocity = _inav->get_velocity();
 
     // convert inertial nav earth-frame velocities_cm/s to body-frame
-    vel_fwd_abs = abs(velocity.x * _ahrs->cos_yaw() + velocity.y * _ahrs->sin_yaw());
+    vel_fwd = velocity.x * _ahrs->cos_yaw() + velocity.y * _ahrs->sin_yaw();
+    vel_fwd_abs = abs(vel_fwd);
 
     // get the current time
     now = hal.scheduler->millis();
@@ -275,7 +278,7 @@ AC_Sprayer::update()
         _spraying_last_time = 0;
     }
 
-
+    bool having_both_pump = (RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump_fore) && RC_Channel_aux::function_assigned(RC_Channel_aux::k_sprayer_pump_back));
     // if testing pump output speed as if travelling at 1m/s
     if (_flags.testing) {
         vel_fwd_abs = 100.0f;
@@ -283,23 +286,70 @@ AC_Sprayer::update()
 
     // if spraying or testing update the pump rate percent, for radio direct pwm control（200Hz）, 100% duty -> 5000us
     if (_flags.spraying || _flags.testing) {
-        switch (_sprayer_pump_type) {
-            case Pump_Type_Spinner:
-                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
-                break;
+        if (!having_both_pump) {
+            switch (_sprayer_pump_type) {
+                case Pump_Type_Spinner:
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                    break;
+                case Pump_Type_Diaphragm:
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                    break;
+                default:
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                    RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                    break;
+            }
+        } else {
+            bool running_fore_pump, running_back_pump;
+            if (_flags.testing) {
+                running_fore_pump = true;
+                running_back_pump = true;
+            } else {
+                running_fore_pump = vel_fwd > 0;
+                running_back_pump = !running_fore_pump;
+            }
+            // fore pump controller
+            if (running_fore_pump) {
+                switch (_sprayer_pump_type) {
+                    case Pump_Type_Spinner:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                        break;
+                    case Pump_Type_Diaphragm:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                        break;
+                    default:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_fore, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                        break;
+                }
+            } else {
+                RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_fore);
+            }
 
-            case Pump_Type_Diaphragm:
-                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
-                break;
-
-            default:
-                RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
-                break;
+            // back pump controller
+            if (running_back_pump) {
+                switch (_sprayer_pump_type) {
+                    case Pump_Type_Spinner:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((_pump_min_pct * 50 + 0.5 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 5000));
+                        break;
+                    case Pump_Type_Diaphragm:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                        break;
+                    default:
+                        RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_pump_back, min((1000 + _pump_min_pct * 10 + 0.1 * (vel_fwd_abs - _speed_min) * _pump_pct_1ms), 2000));
+                        break;
+                }
+            } else {
+                RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_back);
+            }
         }
+
         RC_Channel_aux::set_radio(RC_Channel_aux::k_sprayer_spinner, _spinner_pwm);
-    }else{
+    } else {
         // ensure sprayer and spinner are off
-        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_fore);
+        RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_pump_back);
         RC_Channel_aux::set_radio_to_min(RC_Channel_aux::k_sprayer_spinner);
     }
 }
