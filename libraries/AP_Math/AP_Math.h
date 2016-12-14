@@ -61,6 +61,10 @@
 #define LATLON_TO_M  0.01113195f
 #define LATLON_TO_CM 1.113195f
 
+#define LOCATION_SCALING_FACTOR_CM 1.1131884502145034f
+// inverse of LOCATION_SCALING_FACTOR
+#define LOCATION_SCALING_FACTOR_CM_INV 0.8983204953368922f
+
 // Semi-major axis of the Earth, in meters.
 #define WGS84_A 6378137.0
 //Inverse flattening of the Earth
@@ -136,6 +140,16 @@ void        location_offset(struct Location &loc, float ofs_north, float ofs_eas
   from loc1 to loc2
  */
 Vector2f location_diff(const struct Location &loc1, const struct Location &loc2);
+
+/*
+  find two lines intersection
+  */
+bool find_lineintersection(const Vector2f &start1, const Vector2f &end1, const Vector2f &start2, const Vector2f &end2, Vector2f &result);
+
+/*
+  offset point
+  */
+Vector2f point_offset(const Vector2f &origin, float heading, int32_t distance);
 
 /*
   wrap an angle in centi-degrees
