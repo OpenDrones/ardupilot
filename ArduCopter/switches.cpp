@@ -689,6 +689,16 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 compass.set_compass_mnt_ang(1, true);
             }
             break;
+
+        case AUXSW_MIS_DISTANCE_D:
+            // if switch high add mission distance delta
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                mission.set_mission_distance(1);
+            } else if (ch_flag == AUX_SWITCH_LOW) {
+                // if switch low minus mission distance delta
+                mission.set_mission_distance(-1);
+            }
+            break;
     }
 }
 
