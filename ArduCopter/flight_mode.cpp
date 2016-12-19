@@ -239,6 +239,11 @@ void Copter::exit_mode(uint8_t old_control_mode, uint8_t new_control_mode)
         if (mission.state() == AP_Mission::MISSION_RUNNING) {
             mission.stop();
         }
+#if SPRAYER == ENABLED
+        // close sprayer pump and spinner when exit AUTO mode
+        sprayer.enable(false);
+#endif
+
 #if MOUNT == ENABLED
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED
