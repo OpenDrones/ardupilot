@@ -45,6 +45,7 @@
 #define AP_MISSION_RESTART_DEFAULT          0       // resume the mission from the last command run by default
 #define AP_MISSION_DISTANCE_DEFAULT         400     // default distance in AB auto-waypoint mode
 #define AP_MISSION_COUNT_DEFAULT            1       // default counter in AB auto-waypoint mode
+#define AP_MISSION_DISTANCE_DELTA           25      
 
 #define AP_WAYPOINT_CRUISE_A_INDEX          1       // position of point A in memory
 #define AP_WAYPOINT_CRUISE_B_INDEX          2       // position of point B in memory
@@ -403,6 +404,9 @@ public:
 
     // calc simple grid according to polygon point
     bool calc_simple_grid();
+
+    // set mission distance
+    void set_mission_distance(int8_t plus_minus) { _distance_cm.set_and_save(_distance_cm + plus_minus * AP_MISSION_DISTANCE_DELTA); }
 
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
