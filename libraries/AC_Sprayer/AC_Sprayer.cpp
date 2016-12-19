@@ -172,6 +172,10 @@ AC_Sprayer::update()
         _area.set_and_save(_current_total_area);  
     }
     _armed = _motors->armed();
+    // clear drain off flag when disarmed
+    if (!_armed) {
+        _flags.drain_off = false;
+    }
 
     // exit immediately if we are disabled (perhaps set pwm values back to defaults)
     if (!_enabled) {
