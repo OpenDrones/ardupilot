@@ -197,8 +197,8 @@ public:
         k_param_serial1_baud_old, // deprecated
         k_param_telem_delay,
         k_param_gcs2,
-        k_param_serial2_baud_old, // deprecated
-        k_param_serial2_protocol, // deprecated
+		k_param_ch13_option,
+        k_param_ch14_option,        
         k_param_serial_manager,
         k_param_ch9_option,
         k_param_ch10_option,
@@ -438,6 +438,8 @@ public:
     AP_Int8         ch10_option;
     AP_Int8         ch11_option;
     AP_Int8         ch12_option;
+    AP_Int8         ch13_option;
+    AP_Int8         ch14_option;
     AP_Int8         arming_check;
     AP_Int8         disarm_delay;
 

@@ -16,6 +16,8 @@ static union {
         uint8_t CH10_flag           : 2; // 8, 9    // ch10 aux switch : 0 is low or false, 1 is center or true, 2 is high
         uint8_t CH11_flag           : 2; // 10,11   // ch11 aux switch : 0 is low or false, 1 is center or true, 2 is high
         uint8_t CH12_flag           : 2; // 12,13   // ch12 aux switch : 0 is low or false, 1 is center or true, 2 is high
+        uint8_t CH13_flag           : 2; // 14,15   // ch13 aux switch : 0 is low or false, 1 is center or true, 2 is high
+        uint8_t CH14_flag           : 2; // 16,17   // ch13 aux switch : 0 is low or false, 1 is center or true, 2 is high 
     };
     uint32_t value;
 } aux_con;
@@ -78,7 +80,8 @@ void Copter::read_control_switch()
 bool Copter::check_if_auxsw_mode_used(uint8_t auxsw_mode_check)
 {
     bool ret = g.ch7_option == auxsw_mode_check || g.ch8_option == auxsw_mode_check || g.ch9_option == auxsw_mode_check 
-                || g.ch10_option == auxsw_mode_check || g.ch11_option == auxsw_mode_check || g.ch12_option == auxsw_mode_check;
+                || g.ch10_option == auxsw_mode_check || g.ch11_option == auxsw_mode_check || g.ch12_option == auxsw_mode_check
+                || g.ch13_option == auxsw_mode_check || g.ch14_option == auxsw_mode_check;
 
     return ret;
 }
@@ -88,19 +91,29 @@ bool Copter::check_duplicate_auxsw(void)
 {
     bool ret = ((g.ch7_option != AUXSW_DO_NOTHING) && (g.ch7_option == g.ch8_option ||
                 g.ch7_option == g.ch9_option || g.ch7_option == g.ch10_option ||
-                g.ch7_option == g.ch11_option || g.ch7_option == g.ch12_option));
+                g.ch7_option == g.ch11_option || g.ch7_option == g.ch12_option ||
+                g.ch7_option == g.ch13_option || g.ch7_option == g.ch14_option));
 
     ret = ret || ((g.ch8_option != AUXSW_DO_NOTHING) && (g.ch8_option == g.ch9_option ||
                     g.ch8_option == g.ch10_option || g.ch8_option == g.ch11_option ||
-                    g.ch8_option == g.ch12_option));
+                    g.ch8_option == g.ch12_option || g.ch8_option == g.ch13_option ||
+                    g.ch8_option == g.ch14_option));
 
     ret = ret || ((g.ch9_option != AUXSW_DO_NOTHING) && (g.ch9_option == g.ch10_option ||
-                    g.ch9_option == g.ch11_option || g.ch9_option == g.ch12_option));
+                    g.ch9_option == g.ch11_option || g.ch9_option == g.ch12_option ||
+                    g.ch9_option == g.ch13_option || g.ch9_option == g.ch14_option));
 
     ret = ret || ((g.ch10_option != AUXSW_DO_NOTHING) && (g.ch10_option == g.ch11_option ||
-                    g.ch10_option == g.ch12_option));
+                    g.ch10_option == g.ch12_option || g.ch10_option == g.ch13_option || 
+                    g.ch10_option == g.ch14_option));
 
-    ret = ret || ((g.ch11_option != AUXSW_DO_NOTHING) && (g.ch11_option == g.ch12_option));
+    ret = ret || ((g.ch11_option != AUXSW_DO_NOTHING) && (g.ch11_option == g.ch12_option ||
+                    g.ch11_option == g.ch13_option || g.ch11_option == g.ch14_option));
+
+    ret = ret || ((g.ch12_option != AUXSW_DO_NOTHING) && (g.ch12_option == g.ch13_option ||
+                    g.ch12_option == g.ch14_option));
+
+    ret = ret || ((g.ch13_option != AUXSW_DO_NOTHING) && (g.ch13_option == g.ch14_option));
 
     return ret;
 }
@@ -191,6 +204,25 @@ void Copter::read_aux_switches()
         // invoke the appropriate function
         do_aux_switch_function(g.ch12_option, aux_con.CH12_flag);
     }
+
+    // check if Ch13 switch has changed position
+    switch_position = read_3pos_switch(g.rc_13.radio_in);
+    if (aux_con.CH13_flag != switch_position) {
+        // set the CH13 flag
+        aux_con.CH13_flag = switch_position;
+
+        // invoke the appropriate function
+        do_aux_switch_function(g.ch13_option, aux_con.CH13_flag);
+    }
+    // check if Ch14 switch has changed position
+    switch_position = read_3pos_switch(g.rc_14.radio_in);
+    if (aux_con.CH14_flag != switch_position) {
+        // set the CH14 flag
+        aux_con.CH14_flag = switch_position;
+
+        // invoke the appropriate function
+        do_aux_switch_function(g.ch14_option, aux_con.CH14_flag);
+    }
 #endif
 }
 
@@ -207,6 +239,8 @@ void Copter::init_aux_switches()
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     aux_con.CH9_flag = read_3pos_switch(g.rc_9.radio_in);
     aux_con.CH12_flag = read_3pos_switch(g.rc_12.radio_in);
+    aux_con.CH13_flag = read_3pos_switch(g.rc_13.radio_in);
+    aux_con.CH14_flag = read_3pos_switch(g.rc_14.radio_in);
 #endif
 
     // initialise functions assigned to switches
@@ -219,6 +253,8 @@ void Copter::init_aux_switches()
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     init_aux_switch_function(g.ch9_option, aux_con.CH9_flag);
     init_aux_switch_function(g.ch12_option, aux_con.CH12_flag);
+    init_aux_switch_function(g.ch13_option, aux_con.CH13_flag);
+    init_aux_switch_function(g.ch14_option, aux_con.CH14_flag);
 #endif
 }
 
