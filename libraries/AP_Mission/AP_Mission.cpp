@@ -1629,6 +1629,7 @@ bool AP_Mission::calc_simple_grid()
     if (!clear()) {
         return false;
     }
+	_cmd_total = 1;
     // change waypoint vector as location and write into eeprom
     Mission_Command waypoint_cmd = cmd1;
     for (uint16_t m = 0; m < wp_count; m++)
