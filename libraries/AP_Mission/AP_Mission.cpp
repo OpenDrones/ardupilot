@@ -1641,5 +1641,11 @@ bool AP_Mission::calc_simple_grid()
             return false;
         }
     }
+    // add RTL command in the last
+    Mission_Command rtl_cmd = {};
+    rtl_cmd.id = 20;
+    if (!add_cmd(rtl_cmd)) {
+            return false;
+        }
     return true;
 }
