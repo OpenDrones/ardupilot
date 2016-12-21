@@ -1643,7 +1643,7 @@ bool AP_Mission::calc_simple_grid()
     }
     // add RTL command in the last
     Mission_Command rtl_cmd = {};
-    rtl_cmd.id = 20;
+    rtl_cmd.id = MAV_CMD_NAV_RETURN_TO_LAUNCH;
     if (!add_cmd(rtl_cmd)) {
             return false;
         }
