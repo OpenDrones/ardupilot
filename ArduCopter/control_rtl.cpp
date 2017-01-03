@@ -107,7 +107,13 @@ void Copter::rtl_climb_start()
 #endif
 
     // set the destination
-    wp_nav.set_wp_destination(destination);
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.set_wp_destination(destination);
+    } else {
+        wp_nav.set_wp_xy_origin_and_destination(destination);
+        // set target sonar alt
+        target_sonar_alt = max(target_sonar_alt, g.rtl_altitude);
+    }
     wp_nav.set_fast_waypoint(true);
 
     // hold current yaw during initial climb
@@ -131,8 +137,11 @@ void Copter::rtl_return_start()
     Vector3f destination = pv_location_to_vector(ahrs.get_home());
     destination.z = pv_alt_above_origin(rtl_alt));
 #endif
-
-    wp_nav.set_wp_destination(destination);
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.set_wp_destination(destination);
+    } else {
+        wp_nav.set_wp_xy_origin_and_destination(destination);
+    }
 
     // initialise yaw to point home (maybe)
     set_auto_yaw_mode(get_default_auto_yaw_mode(true));
@@ -158,7 +167,11 @@ void Copter::rtl_climb_return_run()
 
     // process pilot's yaw input
     float target_yaw_rate = 0;
+    float target_climb_rate = 0;
     if (!failsafe.radio) {
+        // get pilot desired climb rate
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
         if (!is_zero(target_yaw_rate)) {
@@ -167,7 +180,19 @@ void Copter::rtl_climb_return_run()
     }
 
     // run waypoint controller
-    wp_nav.update_wpnav();
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.update_wpnav();
+    } else {
+        wp_nav.update_wpnav_xy();
+        // altitude controller according to range finder
+        if (sonar_enabled) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+    
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+    }
 
     // call z-axis position controller (wpnav should have already updated it's alt target)
     pos_control.update_z_controller();
@@ -220,7 +245,11 @@ void Copter::rtl_loiterathome_run()
 
     // process pilot's yaw input
     float target_yaw_rate = 0;
+    float target_climb_rate = 0;
     if (!failsafe.radio) {
+        // get pilot desired climb rate
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
         if (!is_zero(target_yaw_rate)) {
@@ -229,7 +258,19 @@ void Copter::rtl_loiterathome_run()
     }
 
     // run waypoint controller
-    wp_nav.update_wpnav();
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.update_wpnav();
+    } else {
+        wp_nav.update_wpnav_xy();
+        // altitude controller according to range finder
+        if (sonar_enabled) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+    
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+    }
 
     // call z-axis position controller (wpnav should have already updated it's alt target)
     pos_control.update_z_controller();
