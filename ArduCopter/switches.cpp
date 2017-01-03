@@ -4,7 +4,6 @@
 
 #define CONTROL_SWITCH_DEBOUNCE_TIME_MS  200
 #define CONTROL_SWITCH_TIME_THRESHOLD_MS 1000
-#define CONTROL_SWITCH_GRID_TIME_THRESHOLD_MS 5000
 
 //Documentation of Aux Switch Flags:
 static union {
@@ -393,21 +392,21 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
 
         case AUXSW_CLEAR_AND_SAVE_WP:
             AP_Notify::flags.succeed_save_wp = 0;
-            // short pressed - save wp, long pressed - clear mission and save wp, very long pressed - auto grid calculation
+            // short pressed - save wp, long pressed - clear mission and save wp if armed, auto grid calculation if not armed
             static uint32_t last_call_ms;
             if (ch_flag == AUX_SWITCH_HIGH) {
                 last_call_ms = millis();
             } else {
                 uint32_t now = millis();
-                if (now - last_call_ms > CONTROL_SWITCH_GRID_TIME_THRESHOLD_MS) {
-                    if(mission.calc_simple_grid()) {
+                if (now - last_call_ms > CONTROL_SWITCH_TIME_THRESHOLD_MS) {
+                    if (motors.armed()) {
+                        clear_and_save_waypoint();
+                    } else if(mission.calc_simple_grid()) {
                         AP_Notify::flags.succeed_save_wp = 2;
                     } else {
                         // alert creat grid failed by LED
-                        AP_Notify::flags.succeed_save_wp = 3;
+                        AP_Notify::flags.succeed_save_wp = 1;
                     }
-                } else if (now - last_call_ms > CONTROL_SWITCH_TIME_THRESHOLD_MS) {
-                    clear_and_save_waypoint();
                 } else {
                     save_add_waypoint();
                 }
