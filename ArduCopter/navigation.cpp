@@ -81,6 +81,14 @@ void Copter::calc_home_distance_and_bearing()
 void Copter::run_autopilot()
 {
     if (control_mode == AUTO) {
+#if SPRAYER == ENABLED
+        // open sprayer pump and spinner when reaching the waypoint
+        if (auto_mode != Auto_WP && auto_mode != Auto_Spline) {
+            sprayer.enable(false);
+        } else if (wp_nav.reached_wp_destination()) {
+            sprayer.enable(true);
+        }
+#endif
         // update state of mission
         // may call commands_process.pde's start_command and verify_command functions
         mission.update();
