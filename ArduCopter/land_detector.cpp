@@ -62,8 +62,12 @@ void Copter::update_land_detector()
 
         // check that the airframe is not accelerating (not falling or breaking after fast forward flight)
         bool accel_stationary = (land_accel_ef_filter.get().length() <= LAND_DETECTOR_ACCEL_MAX);
+        bool accel_kinetic = (land_accel_ef_filter.get().length() <= 3*LAND_DETECTOR_ACCEL_MAX);
+        
+		// check that vertical speed is within 1m/s of zero
+        bool descent_rate_low = fabsf(inertial_nav.get_velocity_z()) < 100;
 
-        if (motor_at_lower_limit && accel_stationary) {
+        if (motor_at_lower_limit && (accel_stationary || (accel_kinetic && descent_rate_low))) {
             // landed criteria met - increment the counter and check if we've triggered
             if( land_detector_count < ((float)LAND_DETECTOR_TRIGGER_SEC)*MAIN_LOOP_RATE) {
                 land_detector_count++;
