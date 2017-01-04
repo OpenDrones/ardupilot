@@ -254,8 +254,8 @@ struct PACKED log_RCOUT {
     uint16_t chan8;
     uint16_t chan9;
     uint16_t chan10;
-    uint16_t chan11;
-    uint16_t chan12;
+    uint16_t chan13;
+    uint16_t chan14;
 };
 
 struct PACKED log_BARO {
@@ -656,7 +656,7 @@ Format characters in the format string for binary log messages
     { LOG_RCIN_MSG, sizeof(log_RCIN), \
       "RCIN",  "Qhhhhhhhhhhhhhh",     "TimeUS,C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11,C12,C13,C14" }, \
     { LOG_RCOUT_MSG, sizeof(log_RCOUT), \
-      "RCOU",  "Qhhhhhhhhhhhh",     "TimeUS,Ch1,Ch2,Ch3,Ch4,Ch5,Ch6,Ch7,Ch8,Ch9,Ch10,Ch11,Ch12" }, \
+      "RCOU",  "Qhhhhhhhhhhhh",     "TimeUS,Ch1,Ch2,Ch3,Ch4,Ch5,Ch6,Ch7,Ch8,Ch9,Ch10,Ch13,Ch14" }, \
     { LOG_BARO_MSG, sizeof(log_BARO), \
       "BARO",  "Qffcf", "TimeUS,Alt,Press,Temp,CRt" }, \
     { LOG_POWR_MSG, sizeof(log_POWR), \
