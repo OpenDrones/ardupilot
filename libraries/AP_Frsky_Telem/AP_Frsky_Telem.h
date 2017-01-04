@@ -139,6 +139,7 @@ private:
     void send_mode(void);
     void send_armed_stat(void);
     void send_baro_alt_m(void);
+    void send_baro_alt_cm(void);
     void send_target_sonar_alt_cm(void);
     void send_batt_remain(void);
     void send_batt_volts(void);

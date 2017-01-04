@@ -319,12 +319,15 @@ void AP_Frsky_Telem::sport_tick(void)
                     case 0 :
                         send_baro_alt_m();
                         break;
-                    case 1:
+                    case 1 :
+                        send_baro_alt_cm();
+                        break;
+                    case 2:
                         send_target_sonar_alt_cm();
                         break;
                     }
                     _vario_call ++;
-                    if (_vario_call > 1) {
+                    if (_vario_call > 2) {
                         _vario_call = 0;
                         _baro_data_ready = false;
                     }
@@ -642,6 +645,14 @@ void AP_Frsky_Telem::send_baro_alt_m(void)
 
 /*
  * send barometer altitude decimal part
+ */
+void AP_Frsky_Telem::send_baro_alt_cm(void)
+{
+    frsky_send_data(FRSKY_ID_BARO_ALT_AP, _baro_alt_cm);
+}
+
+/*
+ * send target rangefinder altitude
  */
 void AP_Frsky_Telem::send_target_sonar_alt_cm(void)
 {
