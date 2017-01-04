@@ -75,6 +75,7 @@ public:
     void set_pump_rate(float pct_at_1ms) { _pump_pct_1ms.set(pct_at_1ms); }
 
     float get_spray_area() const { return _current_total_area; }
+    float get_spray_area_once() const { return _area_one_time; }
 
     /// update - adjusts servo positions based on speed and requested quantity
     void update();
@@ -116,6 +117,7 @@ private:
     uint32_t        _spraying_last_time;    // last time at which record system time
     bool            _armed;                 // moters arm status
     float           _current_total_area;    // current total spraying area
+    float           _area_one_time;         // spraying area one time flying
 
 };
 

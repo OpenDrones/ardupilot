@@ -107,6 +107,7 @@ AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, const AP_FlowSensor* flowsens
     _speed_under_min_time(0),
     _drain_off_pre_time(0),
     _spraying_last_time(0),
+    _area_one_time(0),
     _armed(false)
 
 {   
@@ -275,7 +276,10 @@ AC_Sprayer::update()
         if (_spraying_last_time == 0) {
             _spraying_last_time = now;
         } else {
-            _current_total_area += ( vel_fwd_abs * (float)(now - _spraying_last_time) * (float)_width )/ (1.0e7f * 666.7f);
+            float area_dt;
+            area_dt = ( vel_fwd_abs * (float)(now - _spraying_last_time) * (float)_width )/ (1.0e7f * 666.7f);
+            _current_total_area += area_dt;
+            _area_one_time += area_dt;
             _spraying_last_time = now;
         }
     } else {
