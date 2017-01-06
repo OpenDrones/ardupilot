@@ -440,6 +440,10 @@ void Copter::three_hz_loop()
     if (g.notify_bitmask & MASK_NOTIFY_DRAINOFF) {
         AP_Notify::flags.drain_off = sprayer.get_drain_off();
     }
+
+    if (!failsafe.drain_off && ap.drain_off) {
+        failsafe_drain_off_event();
+    }
 #endif
 
     update_events();

@@ -283,6 +283,7 @@ private:
         uint8_t battery             : 1; // 2   // A status flag for the battery failsafe
         uint8_t gcs                 : 1; // 4   // A status flag for the ground station failsafe
         uint8_t ekf                 : 1; // 5   // true if ekf failsafe has occurred
+        uint8_t drain_off           : 1; // 6   // true if drain off has occured
 
         int8_t radio_counter;            // number of iterations with throttle below throttle_fs_value
 
@@ -813,6 +814,7 @@ private:
     void esc_calibration_auto();
     void failsafe_radio_on_event();
     void failsafe_radio_off_event();
+    void failsafe_drain_off_event();
     void failsafe_battery_event(void);
     void failsafe_gcs_check();
     void failsafe_gcs_off_event(void);

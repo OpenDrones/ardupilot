@@ -99,6 +99,36 @@ void Copter::failsafe_radio_off_event()
     // user can now override roll, pitch, yaw and throttle and even use flight mode switch to restore previous flight mode
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_RADIO, ERROR_CODE_FAILSAFE_RESOLVED);
 }
+void Copter::failsafe_drain_off_event(void)
+{
+    if (failsafe.drain_off) {
+        return;
+    }
+    if (control_mode == AUTO) {
+        // if mission has not started AND vehicle is landed, disarm motors
+        if (!ap.auto_armed && ap.land_complete) {
+            init_disarm_motors();
+            return;
+        } else {
+            // set mode to RTL or LAND
+            if (home_distance > FS_CLOSE_TO_HOME_CM) {
+                // switch to RTL or if that fails, LAND
+                set_mode_RTL_or_land_with_pause();
+            } else {
+				set_mode_land_with_pause();
+				}
+        }
+        // save break way-point in mission and set command index
+        if (!mission.is_restart() && auto_mode == Auto_WP) {
+            AP_Mission::Mission_Command cmd = {};
+            cmd.id = MAV_CMD_NAV_WAYPOINT;
+            cmd.content.location = current_loc;
+            cmd.p1 = 0;
+            mission.replace_cmd(mission.get_prev_nav_cmd_index(),cmd);
+        }
+    }
+	failsafe.drain_off = true;
+}
 
 void Copter::failsafe_battery_event(void)
 {
