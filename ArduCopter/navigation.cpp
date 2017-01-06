@@ -69,7 +69,13 @@ void Copter::calc_home_distance_and_bearing()
         home_distance = pv_get_horizontal_distance_cm(curr, home);
         home_bearing = pv_get_bearing_cd(curr,home);
 #if FRSKY_TELEM_ENABLED == ENABLED
-        frsky_telemetry.calc_home_distance(home_distance);
+    	uint32_t frsky_distance;
+    	if (control_mode == AUTO || control_mode == WPCRUISE || control_mode == RTL || (control_mode == GUIDED && guided_mode == Guided_WP)) {
+        	frsky_distance = wp_nav.get_wp_distance_to_destination();
+    	} else {
+            frsky_distance = home_distance;
+        }
+    	frsky_telemetry.calc_home_distance(frsky_distance);
 #endif
 
         // update super simple bearing (if required) because it relies on home_bearing
