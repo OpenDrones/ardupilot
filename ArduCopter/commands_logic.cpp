@@ -601,7 +601,9 @@ bool Copter::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
     }
 
     // play a tone
-    AP_Notify::events.waypoint_complete = 1;
+    if (g.notify_bitmask & MASK_NOTIFY_WP_REACHED) {
+        AP_Notify::events.waypoint_complete = 1;
+    }
 
     // start timer if necessary
     if(loiter_time == 0) {

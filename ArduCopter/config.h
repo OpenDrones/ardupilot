@@ -757,7 +757,8 @@
     MASK_NOTIFY_BATT | \
     MASK_NOTIFY_EKF | \
     MASK_NOTIFY_DRAINOFF | \
-    MASK_NOTIFY_CRUISE_LOIT
+    MASK_NOTIFY_CRUISE_LOIT | \
+    MASK_NOTIFY_WP_REACHED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
