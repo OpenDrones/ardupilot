@@ -132,6 +132,14 @@ void Copter::failsafe_battery_event(void)
 
                 // set mode to RTL or LAND
                 } else if (home_distance > FS_CLOSE_TO_HOME_CM) {
+                    // save break way-point in mission and set command index
+                    if (!mission.is_restart() && auto_mode == Auto_WP) {
+                        AP_Mission::Mission_Command cmd = {};
+                        cmd.id = MAV_CMD_NAV_WAYPOINT;
+                        cmd.content.location = current_loc;
+                        cmd.p1 = 0;
+                        mission.replace_cmd(mission.get_prev_nav_cmd_index(),cmd);
+                    } 
                     // switch to RTL or if that fails, LAND
                     set_mode_RTL_or_land_with_pause();
                 } else {
