@@ -1545,29 +1545,44 @@ bool AP_Mission::calc_simple_grid()
     //judge offset direction according rect center point and polygon 1,2
     float S = (polygon[0].x - rect_center.x)*(polygon[1].y - rect_center.y) - (polygon[0].y - rect_center.y)*(polygon[1].x - rect_center.x);
     
-    Vector2f point_temp = mid_point;
-    // calc max parallel lines number
-    uint8_t lines_num = diagdist/_distance_cm + 1;
-    Line Lines[lines_num];
-    Line last_offset_line;
-    int16_t last_line_number = -1;
-    Vector2f waypoint[lines_num*2];
-    
-    // set first and second polygon as waypoint directly
-    waypoint[0] = polygon[0];
-    waypoint[1] = polygon[1];
-    uint16_t wp_count = 2;
+    // calc heading_offset
     float heading_offset = 0;
-
-    for (uint8_t j = 1; j < lines_num; j++)
-    {
-        if(S > 0) {
+    if(S > 0) {
             heading_offset = heading - 90;
         } else {
             heading_offset = heading + 90;
         }
+    Vector2f point_temp = point_offset(mid_point, heading_offset, 0.4*_distance_cm);
+    
+    // calc max parallel lines number and define waypoint arrays
+    uint8_t lines_num = diagdist/_distance_cm + 1;
+    Line Lines[lines_num];
+    Line last_offset_line, first_offset_line;
+    int16_t last_line_number = -1;
+    Vector2f waypoint[lines_num*2];
+    // waypoint counter
+    uint16_t wp_count = 0;
+    
+    // calc first and second waypoints
+	first_offset_line.p1 = point_offset(point_temp, heading + 180, diagdist);
+    first_offset_line.p2 = point_offset(point_temp, heading, diagdist);
+    // calc intersection
+    for (uint8_t l = polygon_num - 1; l > 0; l--)
+    {
+        Vector2f intersection_first;
+        if(find_lineintersection(polygon[l], polygon[l+1], first_offset_line.p1, first_offset_line.p2, intersection_first)) {
+            waypoint[wp_count] = intersection_first;
+            wp_count++;
+        }
+    }
+    // the first offset line must have two waypoints, else return false
+    if (wp_count != 2) {
+        return false;
+    }
+    // calc other waypoints
+    for (uint8_t j = 1; j < lines_num; j++)
+    {
         point_temp = point_offset(point_temp, heading_offset, _distance_cm);
-
         Lines[j-1].p1 = point_offset(point_temp, heading + 180, diagdist);
         Lines[j-1].p2 = point_offset(point_temp, heading, diagdist);
 
@@ -1599,7 +1614,7 @@ bool AP_Mission::calc_simple_grid()
         }
     }
     // calculate last two intersection points
-    point_temp = point_offset(mid_point, heading_offset, (last_line_number + 0.5)*_distance_cm);
+    point_temp = point_offset(mid_point, heading_offset, (last_line_number + 0.9)*_distance_cm);
     
     last_offset_line.p1 = point_offset(point_temp, heading + 180, diagdist);
     last_offset_line.p2 = point_offset(point_temp, heading, diagdist);
