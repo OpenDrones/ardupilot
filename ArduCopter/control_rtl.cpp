@@ -107,7 +107,7 @@ void Copter::rtl_climb_start()
 #endif
 
     // set the destination
-    if (g.sonar_alt_wp == 0) {
+    if (g.sonar_alt_wp == 0 || g.rtl_altitude != 0) {
         wp_nav.set_wp_destination(destination);
     } else {
         wp_nav.set_wp_xy_origin_and_destination(destination);
@@ -137,7 +137,7 @@ void Copter::rtl_return_start()
     Vector3f destination = pv_location_to_vector(ahrs.get_home());
     destination.z = pv_alt_above_origin(rtl_alt));
 #endif
-    if (g.sonar_alt_wp == 0) {
+    if (g.sonar_alt_wp == 0 || g.rtl_altitude != 0) {
         wp_nav.set_wp_destination(destination);
     } else {
         wp_nav.set_wp_xy_origin_and_destination(destination);
@@ -180,7 +180,7 @@ void Copter::rtl_climb_return_run()
     }
 
     // run waypoint controller
-    if (g.sonar_alt_wp == 0) {
+    if (g.sonar_alt_wp == 0 || g.rtl_altitude != 0) {
         wp_nav.update_wpnav();
     } else {
         wp_nav.update_wpnav_xy();
@@ -258,7 +258,7 @@ void Copter::rtl_loiterathome_run()
     }
 
     // run waypoint controller
-    if (g.sonar_alt_wp == 0) {
+    if (g.sonar_alt_wp == 0 || g.rtl_altitude != 0) {
         wp_nav.update_wpnav();
     } else {
         wp_nav.update_wpnav_xy();
