@@ -42,6 +42,13 @@ const AP_Param::GroupInfo AP_Mission::var_info[] PROGMEM = {
     // @User: Advanced, not change mannually
     AP_GROUPINFO("OFFSET_DRT",  4, AP_Mission, _offset_direction, 1),
 
+    // @Param: NAV_INDEX
+    // @DisplayName: 
+    // @Description: nav command index stored in eeprom
+    // @Values: 
+    // @User: Advanced, not change mannually
+    AP_GROUPINFO("NAV_INDEX",  5, AP_Mission, _nav_cmd_index, 0),
+
     AP_GROUPEND
 };
 
@@ -106,8 +113,12 @@ void AP_Mission::resume()
 
         // if no valid nav command index restart from beginning
         if (_nav_cmd.index == AP_MISSION_CMD_INDEX_NONE) {
-            start();
-            return;
+            if (_nav_cmd_index >= 2 &&_nav_cmd_index <= _cmd_total) {
+                _nav_cmd.index = _nav_cmd_index - 2;
+            } else {
+                start();
+                return;
+            }
         }
     }
 
@@ -152,6 +163,7 @@ void AP_Mission::reset()
     _nav_cmd.index         = AP_MISSION_CMD_INDEX_NONE;
     _do_cmd.index          = AP_MISSION_CMD_INDEX_NONE;
     _prev_nav_cmd_index    = AP_MISSION_CMD_INDEX_NONE;
+    _nav_cmd_index.set_and_save(0);
 
     init_jump_tracking();
 }
@@ -170,7 +182,7 @@ bool AP_Mission::clear()
 
     // init count
     _count.set_and_save(1);
-
+    _nav_cmd_index.set_and_save(0);
     // clear index to commands
     _nav_cmd.index = AP_MISSION_CMD_INDEX_NONE;
     _do_cmd.index = AP_MISSION_CMD_INDEX_NONE;
@@ -1097,7 +1109,8 @@ void AP_Mission::complete()
 {
     // flag mission as complete
     _flags.state = MISSION_COMPLETE;
-
+    // set nav cmd index stored in eeprom
+    _nav_cmd_index.set_and_save(0);
     // callback to main program's mission complete function
     _mission_complete_fn();
 }
@@ -1152,6 +1165,8 @@ bool AP_Mission::advance_current_nav_cmd()
             _prev_nav_cmd_index = _nav_cmd.index;
             // set current navigation command and start it
             _nav_cmd = cmd;
+            // set cmd index stored in eeprom
+            _nav_cmd_index.set_and_save(_nav_cmd.index);
             _flags.nav_cmd_loaded = true;
             _cmd_start_fn(_nav_cmd);
         }else{

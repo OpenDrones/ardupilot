@@ -481,6 +481,7 @@ private:
     AP_Int16                _distance_cm;  // distance in AB auto-waypoint mode
     AP_Int16                _count;     // count of waypoint in AB auto-waypoint mode
     AP_Int8                 _offset_direction; // offset direction in AB auto-waypoint mode
+    AP_Int16                _nav_cmd_index;    // nav command index stored in eeprom
 
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started
