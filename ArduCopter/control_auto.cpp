@@ -498,7 +498,12 @@ bool Copter::auto_loiter_start()
     pos_control.get_stopping_point_z(stopping_point);
 
     // initialise waypoint controller target to stopping point
-    wp_nav.set_wp_origin_and_destination(origin, stopping_point);
+    // don't use range finder in auto flight mode
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.set_wp_origin_and_destination(origin, stopping_point);
+    } else {
+        wp_nav.set_wp_xy_origin_and_destination(stopping_point);
+    }
 
     // hold yaw at current heading
     set_auto_yaw_mode(AUTO_YAW_HOLD);
@@ -524,12 +529,31 @@ void Copter::auto_loiter_run()
 
     // accept pilot input of yaw
     float target_yaw_rate = 0;
+    float target_climb_rate = 0;
     if(!failsafe.radio) {
+        // get pilot desired climb rate
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->control_in);
     }
 
     // run waypoint and z-axis postion controller
-    wp_nav.update_wpnav();
+    // don't use range finder in auto flight mode
+    if (g.sonar_alt_wp == 0) {
+        wp_nav.update_wpnav();
+    } 
+    // use range finder in auto flight mode
+    else {
+        wp_nav.update_wpnav_xy();
+        // altitude controller according to range finder
+        if (sonar_enabled) {
+            // if sonar is ok, use surface tracking
+            target_climb_rate = get_surface_tracking_climb_rate(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+        }
+    
+        // update altitude target and call position controller
+        pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+    }
     pos_control.update_z_controller();
     attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
 }
