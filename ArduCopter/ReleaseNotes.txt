@@ -1,5 +1,14 @@
 APM:Copter Release Notes:
 ------------------------------------------------------------------
+AgCopter 1.2.1 16-Jan-2017
+Changes from 1.2.0
+1) bug fix of position controller
+2) add simple grid calculation
+3) add Nano NRA24 radar rangefinder support
+4) sprayer update
+5) auto mode and rtl mode controller
+6) some other improvements
+------------------------------------------------------------------
 Copter 3.3.3 24-Feb-2016 / 3.3.3-rc2 27-Jan-2016
 Changes from 3.3.3-rc1
 1) bug fix to Guided mode's velocity controller to run at 400hz
