@@ -779,7 +779,7 @@ void Copter::auto_trim()
 void Copter::save_add_waypoint()
 {
     // do not allow saving new waypoints while we're in auto or wpcruise mode or disarmed
-    if(control_mode == AUTO || control_mode == WPCRUISE || !motors.armed() || !position_ok()) {
+    if(control_mode == AUTO || !motors.armed() || !position_ok()) {
         return;
     }
 
